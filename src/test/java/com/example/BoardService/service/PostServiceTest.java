@@ -16,7 +16,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 @ExtendWith(MockitoExtension.class)
 public class PostServiceTest {
@@ -55,4 +58,28 @@ public class PostServiceTest {
         assertThat(postDTOList.get(1).getPostTime()).isEqualTo(now);
 
     }
+
+    @DisplayName("게시글을 성공적으로 생성한다.")
+    @Test
+    void createPostSucessfully(){
+        //given-craetePost에 매개변수로 들어갈 DTO와 save()에서 return 예상 값 작성 + when()작성
+        //createPost의 매개변수DTO
+        PostDTO targetDTO = new PostDTO(null,"제목1","내용1",null);
+        //repository에 save된후 return값 예상
+        Post savedEntity = new Post(1L,"제목1","내용1",now);
+        //when(): save(entity)한다고 가정
+        when(postRepository.save(any(Post.class))).thenReturn(savedEntity);
+
+        //when-test가 아닌 실제 구현에서 사용할 메소드에 저장
+        PostDTO result = postService.createPost(targetDTO);
+
+        //given-실제와 test 케이스가 맞는지 확인
+        assertThat(result.getPostId()).isEqualTo(1L);
+        assertThat(result.getPostContent()).isEqualTo("내용1");
+        assertThat(result.getPostTitle()).isEqualTo("제목1");
+
+        verify(postRepository,times(1)).save(any(Post.class));
+    }
+
+
 }

@@ -12,7 +12,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         http
-                .csrf((auth)->auth.disable());
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/posts/**").permitAll()  // /posts 경로에 대해 모든 접근 허용
+                        .anyRequest().authenticated()
+                );
 
         return http.build();
     }

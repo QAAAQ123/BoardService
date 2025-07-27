@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,5 +29,17 @@ public class PostService {
         }
         log.info("/posts GET Request:Service logic sucess");
         return postDTOList;
+    }
+
+    public PostDTO createPost(PostDTO postDTO){
+        //받아온 DTO를 entity로 변환해서 repository에 저장한다.
+        Post taregetEntity = postDTO.toEntity();
+        taregetEntity.setPostTime(LocalDateTime.now());
+
+        Post savedEntity = postRepository.save(taregetEntity);
+        PostDTO savedDTO = savedEntity.toDTO();
+
+        log.info("/posts POST Request:Service logic sucess");
+        return savedDTO;
     }
 }
