@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
 public class PostDTO {
     private Long postId;
     private String postTitle;

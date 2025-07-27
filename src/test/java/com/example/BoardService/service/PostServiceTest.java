@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,12 +30,15 @@ public class PostServiceTest {
 
     @DisplayName("모든 게시글 목록을 성공적으로 조회한다.")
     @Test
-    void getAllPostSucessfully(){
+    void showAllPostSucessfully(){
         //준비: postrepository가 반환할 가짜 post 엔티티 목록 설정
-        List<Post> mockPosts = Arrays.asList(
+        List<Post> list = Arrays.asList(
                 new Post(null,"제목1","내용1",now),
                 new Post(null ,"제목2","내용2",now)
         );
+
+        List<Post> mockPosts = new ArrayList<>(list);
+
         when(postRepository.findAll()).thenReturn(mockPosts);//findAll() 호출 시 mockPosts 반환
 
         //실행: 테스트 대상 메서드 호출
@@ -43,13 +47,12 @@ public class PostServiceTest {
         //검증: 예상되는 결과 확인
         assertThat(postDTOList).isNotNull();
         assertThat(postDTOList).hasSize(2);
-        assertThat(postDTOList.get(0).getpostTitle()).isEquals("제목1");
-        assertThat(postDTOList.get(1).getpostTitle()).isEquals("제목2");
-        assertThat(postDTOList.get(0).getpostContnet()).isEquals("내용1");
-        assertThat(postDTOList.get(1).getpostContnet()).isEquals("내용2");
-        assertThat(postDTOList.get(0).getpostTime()).isEquals(now);
-        assertThat(postDTOList.get(1).getpostTime()).isEquals(now);
-
+        assertThat(postDTOList.get(0).getPostTitle()).isEqualTo("제목1");
+        assertThat(postDTOList.get(1).getPostTitle()).isEqualTo("제목2");
+        assertThat(postDTOList.get(0).getPostContent()).isEqualTo("내용1");
+        assertThat(postDTOList.get(1).getPostContent()).isEqualTo("내용2");
+        assertThat(postDTOList.get(0).getPostTime()).isEqualTo(now);
+        assertThat(postDTOList.get(1).getPostTime()).isEqualTo(now);
 
     }
 }

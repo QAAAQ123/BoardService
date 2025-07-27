@@ -1,5 +1,6 @@
 package com.example.BoardService.entity;
 
+import com.example.BoardService.dto.PostDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,4 +27,7 @@ public class Post {
     @Column(name = "post_time")
     private LocalDateTime postTime;
 
+    public PostDTO toDTO() {
+        return new PostDTO(this.postId,this.postTitle,this.postContent,this.postTime);
+    }
 }
