@@ -6,7 +6,6 @@ import com.example.BoardService.repository.PostRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -41,5 +40,37 @@ public class PostService {
 
         log.info("/posts POST Request:Service logic sucess");
         return savedDTO;
+    }
+
+    public PostDTO updatePost(Long postId,PostDTO inputDTO) {
+        //받아온 inputDto에는 postID가 없다.
+        //받아온 DTO를 entity로 바꾸고 기존의 데이터와 merge
+        //수정한 데이터 DTO로 바꿔서 Return
+        
+        //1. 기존 데이터 꺼내기,DTO to Entity
+        Post targetPostEntity = postRepository.findByIdOrElseThrow(postId);
+        Post inputPostEntity = inputDTO.toEntity();
+        //2.merge data and save
+        Post updatedPostEntity = postRepository.save(mergeEntity(targetPostEntity, inputPostEntity));
+        //3. return DTO
+        return updatedPostEntity.toDTO();
+    }
+
+    private Post mergeEntity(Post targetPostEntity, Post inputPostEntity) {
+        boolean hasChanged = false;
+        //title,content 새로운 것만 target에 넣기
+        if(!inputPostEntity.getPostTitle().isEmpty() || inputPostEntity.getPostContent() != null) {
+            targetPostEntity.setPostTitle(inputPostEntity.getPostTitle());
+            hasChanged = true;
+        }
+        if(!inputPostEntity.getPostContent().isEmpty() || inputPostEntity.getPostContent() != null) {
+            targetPostEntity.setPostContent(inputPostEntity.getPostContent());
+            hasChanged = true;
+        }
+
+        if(hasChanged)
+            targetPostEntity.setPostTime(LocalDateTime.now());
+
+        return targetPostEntity;
     }
 }

@@ -84,4 +84,6 @@ public class PostControllerTest {
 //                .andExpect(jsonPath("$.postTitle").value("제목1"))
 //                .andExpect(jsonPath("$.postTime").exists());
     }
+
+    //@DisplayName("PUT /posts/{postId}요청시 게시글을 성공적으로 수정한다.")
 }
