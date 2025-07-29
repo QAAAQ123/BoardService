@@ -14,12 +14,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,7 +44,7 @@ public class PostServiceTest {
         when(mockPostRepository.findAll()).thenReturn(mockPosts);//findAll() 호출 시 mockPosts 반환
 
         //실행: 테스트 대상 메서드 호출
-        List<PostDTO> postDTOList = mockPostService.showPosts();
+        List<PostDTO> postDTOList = mockPostService.showPostsService();
 
         //검증: 예상되는 결과 확인
         assertThat(postDTOList).isNotNull();
@@ -106,5 +104,40 @@ public class PostServiceTest {
 
     }
 
+
+    @DisplayName("게시글을 성공적으로 삭제한다.")
+    @Test
+    void deletePostSucessfullt(){
+        //given-postId
+        Long postId = 1L;
+
+        //when-mock,실제
+        doNothing().when(mockPostRepository).deleteById(anyLong());
+        mockPostService.deletePost(postId);
+
+        //then
+        verify(mockPostRepository).deleteById(postId);
+    }
+
+    @DisplayName("게시글을 성공적으로 조회한다")
+    @Test
+    void showPost(){
+        //given-받아올 값: id,리턴할 값: post dto,리파지토리 리턴값:postentity
+        Long postId = 1L;
+        Post post = new Post(1L,"제목1","내용1",now);
+        PostDTO postDTO = new PostDTO(1L,"제목1","내용1",now);
+
+        //when-리파지토리 find/return entity real real:service(id)
+        when(mockPostRepository.findByIdOrElseThrow(anyLong())).thenReturn(post);
+        PostDTO result = mockPostService.showPost(postId);
+
+        //then-비교
+        assertThat(result.getPostContent()).isEqualTo("내용1");
+        assertThat(result.getPostTitle()).isEqualTo("제목1");
+        verify(mockPostRepository).findByIdOrElseThrow(postId);
+
+        //red:Cannot invoke "com.example.BoardService.dto.PostDTO.getPostContent()" because "result" is null
+
+    }
 
 }

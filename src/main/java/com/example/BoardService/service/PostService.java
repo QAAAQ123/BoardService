@@ -18,7 +18,7 @@ public class PostService {
     @Autowired
     private PostRepository postRepository;
 
-    public List<PostDTO> showPosts(){
+    public List<PostDTO> showPostsService(){
         //user_id를 제외한 모든 엔티티를 DTO로 변환해야 한다.
         List<Post> postList = postRepository.findAll();
         List<PostDTO> postDTOList = new ArrayList<>();
@@ -72,5 +72,16 @@ public class PostService {
             targetPostEntity.setPostTime(LocalDateTime.now());
 
         return targetPostEntity;
+    }
+
+    public void deletePost(Long postId) {
+        postRepository.deleteById(postId);
+    }
+
+    public PostDTO showPost(Long postId) {
+        //id로 리포지토리 조회해서 엔티티 가져오기->엔티팉 dto로 변환동시에 리턴
+        Post post = postRepository.findByIdOrElseThrow(postId);
+
+        return post.toDTO();
     }
 }
