@@ -8,6 +8,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     default Post findByIdOrElseThrow(Long id){
         return findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("ID" + id + "에 해당하는 엔티티가 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("postId " + id + "에 해당하는 엔티티가 없습니다."));
     }
 }

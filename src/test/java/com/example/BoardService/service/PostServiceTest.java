@@ -1,13 +1,19 @@
 package com.example.BoardService.service;
 
+import com.example.BoardService.dto.MediaDTO;
+import com.example.BoardService.dto.PostAndMediasDTO;
 import com.example.BoardService.dto.PostDTO;
+import com.example.BoardService.entity.Media;
 import com.example.BoardService.entity.Post;
+import com.example.BoardService.repository.MediaRepository;
 import com.example.BoardService.repository.PostRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
@@ -25,8 +31,21 @@ public class PostServiceTest {
     @Mock
     private PostRepository mockPostRepository;
 
+    @Mock
+    private MediaRepository mockMediaRepository;
+
     @InjectMocks
     private PostService mockPostService;
+
+    private byte[] sampleJpgBytes;
+    private byte[] samplePngBytes;
+
+    @BeforeEach
+    void mediaSetUp(){
+        MockitoAnnotations.openMocks(this);
+        sampleJpgBytes = new byte[]{(byte)0xFF, (byte)0xD8, (byte)0xFF, (byte)0xE0, 0x00, 0x10, 0x4A, 0x46};
+        samplePngBytes = new byte[]{(byte)0x89, (byte)0x50, (byte)0x4E, (byte)0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+    }
 
     LocalDateTime now = LocalDateTime.now();
 
@@ -125,16 +144,38 @@ public class PostServiceTest {
         //given-받아올 값: id,리턴할 값: post dto,리파지토리 리턴값:postentity
         Long postId = 1L;
         Post post = new Post(1L,"제목1","내용1",now);
-        PostDTO postDTO = new PostDTO(1L,"제목1","내용1",now);
 
+        //given-mdeia 추가-받아 올 값: 없음(postId로 해당 mediaId조회 가능),리턴에 추가할 값: mediaDTOList,리파지토리 리턴 값: mediaEntity
+        //리퍼지토리 리턴값
+        Media jpegImage = new Media(1L, "image/jpeg",sampleJpgBytes,post);
+        Media pngImage = new Media(2L,"image/png",samplePngBytes,post);
+
+        //리턴에 추가할 값
+        List<MediaDTO> mediaDTOList = Arrays.asList(jpegImage.toDTO(),pngImage.toDTO());
+
+        //showPost()에서 최종 리턴 할 값
+        PostAndMediasDTO postAndMediasDTO = new PostAndMediasDTO(post.toDTO(),mediaDTOList);
+
+
+        //----------------------------------------------------------------------------------------------------------
         //when-리파지토리 find/return entity real real:service(id)
         when(mockPostRepository.findByIdOrElseThrow(anyLong())).thenReturn(post);
-        PostDTO result = mockPostService.showPost(postId);
+        //when media관련 추가-리파지토리에서 findxxx로 찾고 리턴값은 엔티티이다. 실제: 변하지 않음
+        when(mockMediaRepository.findAllByPostPostId(anyLong())).thenReturn(Arrays.asList(jpegImage,pngImage));
 
-        //then-비교
-        assertThat(result.getPostContent()).isEqualTo("내용1");
-        assertThat(result.getPostTitle()).isEqualTo("제목1");
+
+        PostAndMediasDTO result = mockPostService.showPost(postId);
+        //then-비교-post
+        assertThat(result.getPostDTO().getPostContent()).isEqualTo("내용1");
+        assertThat(result.getPostDTO().getPostTitle()).isEqualTo("제목1");
+
+        //비교-media
+        assertThat(result.getMediaDTOList().get(0).getMediaType()).isEqualTo("image/jpeg");
+        assertThat(result.getMediaDTOList().get(0).getMediaContent()).isEqualTo(sampleJpgBytes);
+        assertThat(result.getMediaDTOList().size()).isEqualTo(2);
+
         verify(mockPostRepository).findByIdOrElseThrow(postId);
+        verify(mockMediaRepository).findAllByPostPostId(postId);
 
         //red:Cannot invoke "com.example.BoardService.dto.PostDTO.getPostContent()" because "result" is null
 

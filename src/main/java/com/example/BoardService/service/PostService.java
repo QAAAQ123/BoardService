@@ -1,7 +1,10 @@
 package com.example.BoardService.service;
 
+import com.example.BoardService.dto.PostAndMediasDTO;
 import com.example.BoardService.dto.PostDTO;
+import com.example.BoardService.entity.Media;
 import com.example.BoardService.entity.Post;
+import com.example.BoardService.repository.MediaRepository;
 import com.example.BoardService.repository.PostRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -17,6 +21,9 @@ public class PostService {
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private MediaRepository mediaRepository;
 
     public List<PostDTO> showPostsService(){
         //user_id를 제외한 모든 엔티티를 DTO로 변환해야 한다.
@@ -56,6 +63,31 @@ public class PostService {
         return updatedPostEntity.toDTO();
     }
 
+    public void deletePost(Long postId) {
+        postRepository.deleteById(postId);
+    }
+
+    public PostAndMediasDTO showPost(Long postId) {
+        //id로 리포지토리 조회해서 엔티티 가져오기->엔티팉 dto로 변환동시에 리턴
+        Post post = postRepository.findByIdOrElseThrow(postId);
+
+        //미디어 리포지토리 postId로 조회해서 리스트 만든후에 DTO로 변환
+        List<Media> mediaList = mediaRepository.findAllByPostPostId(postId);
+        System.out.println(mediaList.get(0));
+        System.out.println(mediaList.get(1));
+
+        //DTO 합침
+        PostAndMediasDTO postAndMediasDTO = new PostAndMediasDTO(post.toDTO(),
+                mediaList.stream()
+                        .map(Media::toDTO)
+                        .collect(Collectors.toList())
+        );
+
+        return postAndMediasDTO;
+    }
+
+
+
     private Post mergeEntity(Post targetPostEntity, Post inputPostEntity) {
         boolean hasChanged = false;
         //title,content 새로운 것만 target에 넣기
@@ -72,16 +104,5 @@ public class PostService {
             targetPostEntity.setPostTime(LocalDateTime.now());
 
         return targetPostEntity;
-    }
-
-    public void deletePost(Long postId) {
-        postRepository.deleteById(postId);
-    }
-
-    public PostDTO showPost(Long postId) {
-        //id로 리포지토리 조회해서 엔티티 가져오기->엔티팉 dto로 변환동시에 리턴
-        Post post = postRepository.findByIdOrElseThrow(postId);
-
-        return post.toDTO();
     }
 }

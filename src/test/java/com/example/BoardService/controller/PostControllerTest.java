@@ -1,12 +1,18 @@
 package com.example.BoardService.controller;
 
+import com.example.BoardService.dto.MediaDTO;
+import com.example.BoardService.dto.PostAndMediasDTO;
 import com.example.BoardService.dto.PostDTO;
 import com.example.BoardService.service.PostService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,6 +43,7 @@ public class PostControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
 
     LocalDateTime now = LocalDateTime.now();
 
@@ -128,19 +135,25 @@ public class PostControllerTest {
     @DisplayName("GET /Post/{postId} 요청시 게시글을 성공적으로 반환한다.")
     @Test
     void showPostEndpointSucessfully() throws Exception{
-        //given-postId만 받아옴
+        //given-postId만 받아옴,when()에서 반환할 값: PostAndMediaDTO
         Long postId = 1L;
+        byte[] sampleJpgBytes = new byte[]{(byte)0xFF, (byte)0xD8, (byte)0xFF, (byte)0xE0, 0x00, 0x10, 0x4A, 0x46};
+        byte[] samplePngBytes = new byte[]{(byte)0x89, (byte)0x50, (byte)0x4E, (byte)0x47, 0x0D, 0x0A, 0x1A, 0x0A};
         PostDTO postDTO = new PostDTO(1L,"제목1","내용1",now);
+        MediaDTO mediaDTO1 = new MediaDTO(1L,"image/jpeg",sampleJpgBytes);
+        MediaDTO mediaDTO2 = new MediaDTO(2L,"image/png",samplePngBytes);
+        PostAndMediasDTO postAndMediasDTO = new PostAndMediasDTO(postDTO,Arrays.asList(mediaDTO1,mediaDTO2));
 
-        //when
-        when(mockPostService.showPost(anyLong())).thenReturn(postDTO);
+        //when-servicr 계층에서 postAndMediasDTO 반환
+        when(mockPostService.showPost(anyLong())).thenReturn(postAndMediasDTO);
 
         //then postId받아와서 postDTO 클라이언트로
         mockMvc.perform(get("/post/{postId}",postId)
-                .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(postId))
                 .with(user("testuser").roles("USER")))
-                .andDo(print());
+                .andDo(print())
+                .andExpect(status().isOk());
+
     }
 
 }
