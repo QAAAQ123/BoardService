@@ -1,6 +1,7 @@
 package com.example.BoardService.controller;
 
-import com.example.BoardService.dto.PostAndMediasDTO;
+import com.example.BoardService.dto.MediaDTO;
+import com.example.BoardService.dto.PostAndMediaDTO;
 import com.example.BoardService.dto.PostDTO;
 import com.example.BoardService.service.PostService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,12 +29,14 @@ public class PostController {
     }
 
     @PostMapping("/posts")
-    public ResponseEntity<PostDTO> createPost(@RequestBody PostDTO postDTO){
+    public ResponseEntity<PostAndMediaDTO> createPost(@RequestBody PostAndMediaDTO inputPostAndMediaListDTO){
         log.info("/posts POST Request:Create Post");
-        PostDTO createdDTO = postService.createPost(postDTO);
+        PostDTO inputPostDTO = inputPostAndMediaListDTO.getPostDTO();
+        List<MediaDTO> inputMediaListDTO = inputPostAndMediaListDTO.getMediaDTOList();
+        PostAndMediaDTO createdPostAndMediaDTO = postService.createPost(inputPostDTO,inputMediaListDTO);
 
         log.info("/posts POST Request:Controller logic sucess");
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdPostAndMediaDTO);
     }
 
     @PutMapping("/posts/{postId}")
@@ -54,10 +57,10 @@ public class PostController {
     }
 
     @GetMapping("/posts/{postId}")
-    public ResponseEntity<PostAndMediasDTO> showPost(@PathVariable Long postId){
+    public ResponseEntity<PostAndMediaDTO> showPost(@PathVariable Long postId){
         //받은 Id 서비스로 넘겨줌
         log.info("/post/{} GET Reqeust:Show Post",postId);
-        PostAndMediasDTO postAndMediasDTO = postService.showPost(postId);
+        PostAndMediaDTO postAndMediasDTO = postService.showPost(postId);
 
         log.info("/post/{} GET Request:Controller logic sucess",postId);
         return ResponseEntity.status(HttpStatus.OK).body(postAndMediasDTO);

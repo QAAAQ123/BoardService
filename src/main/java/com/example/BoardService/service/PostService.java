@@ -1,6 +1,7 @@
 package com.example.BoardService.service;
 
-import com.example.BoardService.dto.PostAndMediasDTO;
+import com.example.BoardService.dto.MediaDTO;
+import com.example.BoardService.dto.PostAndMediaDTO;
 import com.example.BoardService.dto.PostDTO;
 import com.example.BoardService.entity.Media;
 import com.example.BoardService.entity.Post;
@@ -37,16 +38,27 @@ public class PostService {
         return postDTOList;
     }
 
-    public PostDTO createPost(PostDTO postDTO){
-        //받아온 DTO를 entity로 변환해서 repository에 저장한다.
-        Post taregetEntity = postDTO.toEntity();
-        taregetEntity.setPostTime(LocalDateTime.now());
+    public PostAndMediaDTO createPost(PostDTO postDTO, List<MediaDTO> mediaDTOList){
+        //postrepository에 postEntity저장
+        Post savedPostEntity = postRepository.save(postDTO.toEntity());
 
-        Post savedEntity = postRepository.save(taregetEntity);
-        PostDTO savedDTO = savedEntity.toDTO();
+        //mediaRepository에 mediaEntityList저장
+        List<Media> savedMediaList = mediaRepository.saveAll(
+                mediaDTOList.stream()
+                        .map(MediaDTO::toEntity)
+                        .collect(Collectors.toList())
+        );
 
-        log.info("/posts POST Request:Service logic sucess");
-        return savedDTO;
+        //media와 post연결(setter)
+        for(Media media:savedMediaList)
+            media.setPost(savedPostEntity);
+
+        //저장후 postandmediadto로 변환하여 리턴
+        log.info("/post POST Request:Service logic sucess");
+        return new PostAndMediaDTO(savedPostEntity.toDTO(),savedMediaList.stream()
+                .map(Media::toDTO)
+                .collect(Collectors.toList())
+        );
     }
 
     public PostDTO updatePost(Long postId,PostDTO inputDTO) {
@@ -67,7 +79,7 @@ public class PostService {
         postRepository.deleteById(postId);
     }
 
-    public PostAndMediasDTO showPost(Long postId) {
+    public PostAndMediaDTO showPost(Long postId) {
         //id로 리포지토리 조회해서 엔티티 가져오기->엔티팉 dto로 변환동시에 리턴
         Post post = postRepository.findByIdOrElseThrow(postId);
 
@@ -77,7 +89,7 @@ public class PostService {
         System.out.println(mediaList.get(1));
 
         //DTO 합침
-        PostAndMediasDTO postAndMediasDTO = new PostAndMediasDTO(post.toDTO(),
+        PostAndMediaDTO postAndMediasDTO = new PostAndMediaDTO(post.toDTO(),
                 mediaList.stream()
                         .map(Media::toDTO)
                         .collect(Collectors.toList())
@@ -85,6 +97,7 @@ public class PostService {
 
         return postAndMediasDTO;
     }
+
 
 
 

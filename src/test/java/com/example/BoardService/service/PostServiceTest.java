@@ -1,7 +1,7 @@
 package com.example.BoardService.service;
 
 import com.example.BoardService.dto.MediaDTO;
-import com.example.BoardService.dto.PostAndMediasDTO;
+import com.example.BoardService.dto.PostAndMediaDTO;
 import com.example.BoardService.dto.PostDTO;
 import com.example.BoardService.entity.Media;
 import com.example.BoardService.entity.Post;
@@ -24,7 +24,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 @ExtendWith(MockitoExtension.class)
 public class PostServiceTest {
@@ -77,27 +76,48 @@ public class PostServiceTest {
 
     }
 
+    //미디어 결합 완료
     @DisplayName("게시글을 성공적으로 생성한다.")
     @Test
     void createPostSucessfully(){
-        //given-craetePost에 매개변수로 들어갈 DTO와 save()에서 return 예상 값 작성 + when()작성
-        //createPost의 매개변수DTO
-        PostDTO targetDTO = new PostDTO(null,"제목1","내용1",null);
-        //repository에 save된후 return값 예상
-        Post savedEntity = new Post(1L,"제목1","내용1",now);
-        //when(): save(entity)한다고 가정
-        //이 postRepository는 실제 postRepository가 아닌 **Mock 객체**이다.
-        when(mockPostRepository.save(any(Post.class))).thenReturn(savedEntity);
+        //given-1. 파라미터로 들어오는 값:저장할 데이터 DTO(post,mediaList)
+        PostDTO postDTO = new PostDTO(null,"제목1","내용1",null);
+        MediaDTO mediaDTO1 = new MediaDTO(null,"image/jpeg",sampleJpgBytes);
+        MediaDTO mediaDTO2 = new MediaDTO(null,"image/png",samplePngBytes);
+        List<MediaDTO> mediaDTOList = Arrays.asList(mediaDTO1,mediaDTO2);
 
-        //when-test가 아닌 실제 구현에서 사용할 메소드에 저장
-        PostDTO result = mockPostService.createPost(targetDTO);
+        //2. 리파지터리에서 반환 할 값: input dto를 저장한 엔티티
+        Post savedPost  = new Post(1L,"제목1","내용1",now);
+        Media savedMeida1 = new Media(1L,"image/jpeg",sampleJpgBytes,savedPost);
+        Media savedMedia2 = new Media(2L,"image/png",samplePngBytes,savedPost);
+
+        //3. 최종적으로 반환할 값: dto(post,mediaList)
+        PostAndMediaDTO postAndMediasDTO = new PostAndMediaDTO(savedPost.toDTO(),Arrays.asList(savedMeida1.toDTO(),savedMedia2.toDTO()));
+
+        //when-1. postrepository에 저장->savedPost리턴
+        when(mockPostRepository.save(any(Post.class))).thenReturn(savedPost);
+        //2. mediaReposioty에 저장->savedMediaList 리턴
+        when(mockMediaRepository.saveAll(anyList())).thenReturn(Arrays.asList(savedMeida1,savedMedia2));
+        //3.주입한 service 계층의 메소드 직접 사용 및 리턴 값 저장
+        PostAndMediaDTO resultDTO = mockPostService.createPost(postDTO,mediaDTOList);
 
         //given-실제와 test 케이스가 맞는지 확인
-        assertThat(result.getPostId()).isEqualTo(1L);
-        assertThat(result.getPostContent()).isEqualTo("내용1");
-        assertThat(result.getPostTitle()).isEqualTo("제목1");
+        assertThat(resultDTO.getPostDTO().getPostId()).isEqualTo(1L);
+        assertThat(resultDTO.getPostDTO().getPostTitle()).isEqualTo("제목1");
+        assertThat(resultDTO.getPostDTO().getPostContent()).isEqualTo("내용1");
+        assertThat(resultDTO.getPostDTO().getPostTime()).isNotNull();
+        assertThat(resultDTO.getMediaDTOList().size()).isEqualTo(2);
+        assertThat(resultDTO.getMediaDTOList().get(0).getMediaId()).isEqualTo(1L);
+        assertThat(resultDTO.getMediaDTOList().get(0).getMediaType()).isEqualTo("image/jpeg");
+        assertThat(resultDTO.getMediaDTOList().get(0).getMediaContent()).isNotNull();
+        assertThat(resultDTO.getMediaDTOList().get(1)).isNotNull();
+        assertThat(resultDTO.getMediaDTOList().get(1).getMediaId()).isEqualTo(2L);
+        assertThat(resultDTO.getMediaDTOList().get(1).getMediaType()).isEqualTo("image/png");
+        assertThat(resultDTO.getMediaDTOList().get(1).getMediaContent()).isNotNull();
 
-        verify(mockPostRepository,times(1)).save(any(Post.class));
+
+        verify(mockPostRepository).save(any(Post.class));
+        verify(mockMediaRepository).saveAll(anyList());
     }
 
     @DisplayName("게시글을 성공적으로 수정한다.")
@@ -122,8 +142,7 @@ public class PostServiceTest {
         assertThat(result.getPostTime()).isEqualTo(now);
 
     }
-
-
+    
     @DisplayName("게시글을 성공적으로 삭제한다.")
     @Test
     void deletePostSucessfullt(){
@@ -137,7 +156,8 @@ public class PostServiceTest {
         //then
         verify(mockPostRepository).deleteById(postId);
     }
-
+    
+    //미디어 결합 완료
     @DisplayName("게시글을 성공적으로 조회한다")
     @Test
     void showPost(){
@@ -154,7 +174,7 @@ public class PostServiceTest {
         List<MediaDTO> mediaDTOList = Arrays.asList(jpegImage.toDTO(),pngImage.toDTO());
 
         //showPost()에서 최종 리턴 할 값
-        PostAndMediasDTO postAndMediasDTO = new PostAndMediasDTO(post.toDTO(),mediaDTOList);
+        PostAndMediaDTO postAndMediasDTO = new PostAndMediaDTO(post.toDTO(),mediaDTOList);
 
 
         //----------------------------------------------------------------------------------------------------------
@@ -164,7 +184,7 @@ public class PostServiceTest {
         when(mockMediaRepository.findAllByPostPostId(anyLong())).thenReturn(Arrays.asList(jpegImage,pngImage));
 
 
-        PostAndMediasDTO result = mockPostService.showPost(postId);
+        PostAndMediaDTO result = mockPostService.showPost(postId);
         //then-비교-post
         assertThat(result.getPostDTO().getPostContent()).isEqualTo("내용1");
         assertThat(result.getPostDTO().getPostTitle()).isEqualTo("제목1");

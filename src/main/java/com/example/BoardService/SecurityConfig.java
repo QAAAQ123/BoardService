@@ -14,7 +14,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/posts/**").permitAll()  // /posts 경로에 대해 모든 접근 허용
+                        .requestMatchers("/posts/**").hasRole("USER")
                         .anyRequest().authenticated()
                 );
 

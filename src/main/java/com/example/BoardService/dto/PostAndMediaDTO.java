@@ -9,7 +9,7 @@ import java.util.List;
 @Setter
 @Getter
 @AllArgsConstructor
-public class PostAndMediasDTO {
+public class PostAndMediaDTO {
     private PostDTO postDTO;
     private List<MediaDTO> mediaDTOList;
 }
