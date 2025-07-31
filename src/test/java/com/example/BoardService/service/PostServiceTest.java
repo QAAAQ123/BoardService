@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.in;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -123,24 +124,35 @@ public class PostServiceTest {
     @DisplayName("게시글을 성공적으로 수정한다.")
     @Test
     void updatePostSucessfully(){
-        //given-메소드로 들어올 postId,inputDTO와 existingPost,updatedPost작성
+        //given-리퍼지토리 기본 데이터 설정
+        // 1. 기존 데이터 (DB에 이미 저장되어 있다고 가정)
         Long postId = 1L;
-        PostDTO inputDTO = new PostDTO(null,"제목수정","내용수정",now);
-        Post existingPost = new Post(1L,"제목1","내용1",now.minusHours(1));
-        Post updatedPost = new Post(1L,"제목수정","내용수정",now);
+        Post existingPost = new Post(1L, "원래 제목", "원래 내용", LocalDateTime.now());
+        Media existingMedia1 = new Media(1L, "image/jpeg", sampleJpgBytes, existingPost);
+        Media existingMedia2 = new Media(2L, "image/png", samplePngBytes, existingPost);
+        List<Media> existingMediaList = Arrays.asList(existingMedia1, existingMedia2);
 
+        //2. findById가 호출되면 기존 post,meida 반환하도록 설정
         when(mockPostRepository.findByIdOrElseThrow(postId)).thenReturn(existingPost);
-        when(mockPostRepository.save(any(Post.class))).thenReturn(updatedPost);
+        when(mockMediaRepository.findAllByPostPostId(postId)).thenReturn(existingMediaList);
 
+        //when-수정을 위한 데이터
+        PostDTO inputPostDTO = new PostDTO(null, "수정된 제목", "수정된 내용", null);
+        MediaDTO inputMediaDTO2 = new MediaDTO(2L, "image/jpeg", sampleJpgBytes);
+        MediaDTO inputMediaDTO3 = new MediaDTO(null, "image/gif",samplePngBytes);
+        List<MediaDTO> inputMediaDTOList = Arrays.asList(inputMediaDTO2, inputMediaDTO3);
+        PostAndMediaDTO inputPostAndDTOList = new PostAndMediaDTO(inputPostDTO,inputMediaDTOList);
+        // 실제 서비스 메서드 호출
+        PostAndMediaDTO updatedResult = mockPostService.updatePost(postId, inputPostAndDTOList);
 
-        //when- 실제 service method
-        PostDTO result = mockPostService.updatePost(postId,inputDTO);
+        // then: 결과 검증
+        assertThat(updatedResult.getPostDTO().getPostTitle()).isEqualTo("수정된 제목");
+        assertThat(updatedResult.getMediaDTOList().size()).isEqualTo(2);
+        assertThat(updatedResult.getMediaDTOList()).extracting(MediaDTO::getMediaId)
+                .containsExactlyInAnyOrder(2L, 3L);
 
-        //then- 비교
-        assertThat(result.getPostTitle()).isEqualTo("제목수정");
-        assertThat(result.getPostContent()).isEqualTo("내용수정");
-        assertThat(result.getPostTime()).isEqualTo(now);
-
+        // verify: Mock 객체의 메서드 호출 확인
+        verify(mockMediaRepository, times(1)).deleteById(1L);
     }
     
     @DisplayName("게시글을 성공적으로 삭제한다.")
