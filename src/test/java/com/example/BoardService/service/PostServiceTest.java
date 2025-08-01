@@ -121,6 +121,7 @@ public class PostServiceTest {
         verify(mockMediaRepository).saveAll(anyList());
     }
 
+    //미디어 결합 완료
     @DisplayName("게시글을 성공적으로 수정한다.")
     @Test
     void updatePostSucessfully(){
@@ -128,13 +129,22 @@ public class PostServiceTest {
         // 1. 기존 데이터 (DB에 이미 저장되어 있다고 가정)
         Long postId = 1L;
         Post existingPost = new Post(1L, "원래 제목", "원래 내용", LocalDateTime.now());
+        Post savedPost = new Post(1L, "수정된 제목", "수정된 내용", LocalDateTime.now());
         Media existingMedia1 = new Media(1L, "image/jpeg", sampleJpgBytes, existingPost);
         Media existingMedia2 = new Media(2L, "image/png", samplePngBytes, existingPost);
         List<Media> existingMediaList = Arrays.asList(existingMedia1, existingMedia2);
+        List<Media> savedMediaList = Arrays.asList(
+                new Media(2L, "image/jpeg", sampleJpgBytes,savedPost),
+                new Media(3L, "image/gif",samplePngBytes,savedPost)
+        );
+
+        Long deleteList[] = new Long[]{1L};
 
         //2. findById가 호출되면 기존 post,meida 반환하도록 설정
         when(mockPostRepository.findByIdOrElseThrow(postId)).thenReturn(existingPost);
         when(mockMediaRepository.findAllByPostPostId(postId)).thenReturn(existingMediaList);
+        when(mockPostRepository.save(any(Post.class))).thenReturn(existingPost);
+        when(mockMediaRepository.saveAll(anyList())).thenReturn(savedMediaList);
 
         //when-수정을 위한 데이터
         PostDTO inputPostDTO = new PostDTO(null, "수정된 제목", "수정된 내용", null);
@@ -152,21 +162,23 @@ public class PostServiceTest {
                 .containsExactlyInAnyOrder(2L, 3L);
 
         // verify: Mock 객체의 메서드 호출 확인
-        verify(mockMediaRepository, times(1)).deleteById(1L);
+        verify(mockMediaRepository, times(1)).deleteAllById(List.of(deleteList));
     }
     
     @DisplayName("게시글을 성공적으로 삭제한다.")
     @Test
-    void deletePostSucessfullt(){
+    void deletePostSucessfully(){
         //given-postId
         Long postId = 1L;
 
         //when-mock,실제
         doNothing().when(mockPostRepository).deleteById(anyLong());
+        doNothing().when(mockMediaRepository).deleteAllByPostPostId(anyLong());
         mockPostService.deletePost(postId);
 
         //then
         verify(mockPostRepository).deleteById(postId);
+        verify(mockMediaRepository).deleteAllByPostPostId(postId);
     }
     
     //미디어 결합 완료

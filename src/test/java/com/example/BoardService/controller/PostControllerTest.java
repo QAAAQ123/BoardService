@@ -99,7 +99,7 @@ public class PostControllerTest {
         );
 
         //when-service계층 createPost()로 DTO보내고 postAndmeidasDTO 받음
-        when(mockPostService.createPost(any(PostDTO.class),anyList())).thenReturn(postAndMediaDTO);
+        when(mockPostService.createPost(any(PostDTO.class), anyList())).thenReturn(postAndMediaDTO);
 
         Map<String, Object> requestBodyMap = Map.of(
                 "postDTO", inputPostDTO,
@@ -118,31 +118,44 @@ public class PostControllerTest {
                 .andExpect(status().isCreated());
     }
 
+    //media 결합 완료
     @DisplayName("PUT /posts/{postId} 요청시 게시글을 성공적으로 수정한다.")
     @Test
+    @WithMockUser(username = "testuser", roles = "USER")
     void updatePostEndpointSuccessfully() throws Exception {
-        //given-클라이언트에서 들어올 DTO,서비스 계층 끝나고 리턴한 DTO
-        //when()-serviec계층 any(dto) 넣고 return은 구체적 DTO
-        Long postId = 1L;
-        PostDTO inputDTO = new PostDTO(null, "제목수정", "내용수정", now);
-        PostDTO updatedDTO = new PostDTO(1L, "제목수정", "내용수정", now);
+        /* given-dto로 들어올 값(postandmedia),postId,서비스에서 반환할 값
+        when-서비스 updatePost에 들어가고 리턴함
+        then-mockmvc(put,posts/{postId},requestBody,csrf,media_type,accecpt->print/isOk()
+         */
+        PostDTO postDTO = new PostDTO(null, "제목1", "내용1", null);
+        MediaDTO mediaDTO2 = new MediaDTO(null, "image/jpeg", sampleJpgBytes);
+        MediaDTO mediaDTO3 = new MediaDTO(null, "image/png", samplePngBytes);
+        List<MediaDTO> mediaDTOList = Arrays.asList(mediaDTO2, mediaDTO3);
 
-        when(mockPostService.updatePost(eq(postId), any(PostDTO.class))).thenReturn(updatedDTO);
+        PostDTO updatedPostDTO = new PostDTO(1L, "수정된 제목", "수정된 내용", now);
+        MediaDTO updatedMediaDTO2 = new MediaDTO(2L, "image/jpeg", sampleJpgBytes);
+        MediaDTO updatedMediaDTO3 = new MediaDTO(3L, "image/png", samplePngBytes);
+        List<MediaDTO> updatedMediaDTOList = Arrays.asList(updatedMediaDTO2, updatedMediaDTO3);
+
+        Long postId = 1L;
+        PostAndMediaDTO inputPostAndMediaDTO = new PostAndMediaDTO(postDTO, mediaDTOList);
+        PostAndMediaDTO updatedPostAndDTOList = new PostAndMediaDTO(updatedPostDTO, updatedMediaDTOList);
+
+        when(mockPostService.updatePost(anyLong(), any(PostAndMediaDTO.class))).thenReturn(updatedPostAndDTOList);
 
         //when+then - mockMvc
-        mockMvc.perform(put("/post/{postId}", postId)
+        mockMvc.perform(put("/posts/{postId}", postId)
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updatedDTO))//LocalDateTime 직렬화 불가능 에러 jackson 의존성 추가하여 해결
-                        .with(user("testuser").roles("USER")))
-                .andDo(print());
-        //.andExpect(status().isOk());
-
-        //red:실패-INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes
-        //green:성공-security관련 오류 발생-> andExpect에서 오류(요청을 잘 받아와지는데 security때문에 핸들러부터 null로 표시됨)
+                        .content(objectMapper.writeValueAsString(inputPostAndMediaDTO)))
+                .andDo(print())
+                .andExpect(status().isOk());
     }
 
+    //media 결합 완료
     @DisplayName("DELETE /Post/{postId} 요청시 게시글을 성공적으로 삭제한다")
     @Test
+    @WithMockUser(username = "testuser",roles = "USER")
     void deletePostEndpointSucessfully() throws Exception {
         //given-id받아옴
         Long postId = 1L;
@@ -151,9 +164,10 @@ public class PostControllerTest {
         doNothing().when(mockPostService).deletePost(anyLong());
 
         //when실제 + then(when의 실제 동작이 클라이언트에서 요청 받아 데이터 보내는것)
-        mockMvc.perform(delete("/post/{postId}", postId)
-                        .with(user("testuser").roles("USER")))
-                .andDo(print());
+        mockMvc.perform(delete("/posts/{postId}", postId)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isNoContent());
 
     }
 

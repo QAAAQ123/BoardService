@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface MediaRepository extends JpaRepository<Media,Long> {
     List<Media> findAllByPostPostId(Long id);
+    void deleteAllByPostPostId(Long id);
 }
