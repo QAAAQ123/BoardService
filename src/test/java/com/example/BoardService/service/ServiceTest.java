@@ -1,10 +1,10 @@
 package com.example.BoardService.service;
 
-import com.example.BoardService.dto.MediaDTO;
-import com.example.BoardService.dto.PostAndMediaDTO;
-import com.example.BoardService.dto.PostDTO;
+import com.example.BoardService.dto.*;
+import com.example.BoardService.entity.Comment;
 import com.example.BoardService.entity.Media;
 import com.example.BoardService.entity.Post;
+import com.example.BoardService.repository.CommentRepository;
 import com.example.BoardService.repository.MediaRepository;
 import com.example.BoardService.repository.PostRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,20 +22,22 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class PostServiceTest {
+public class ServiceTest {
     @Mock
     private PostRepository mockPostRepository;
 
     @Mock
     private MediaRepository mockMediaRepository;
 
+    @Mock
+    private CommentRepository mockCommentRepository;
+
     @InjectMocks
-    private PostService mockPostService;
+    private Service mockService;
 
     private byte[] sampleJpgBytes;
     private byte[] samplePngBytes;
@@ -63,7 +65,7 @@ public class PostServiceTest {
         when(mockPostRepository.findAll()).thenReturn(mockPosts);//findAll() 호출 시 mockPosts 반환
 
         //실행: 테스트 대상 메서드 호출
-        List<PostDTO> postDTOList = mockPostService.showPostsService();
+        List<PostDTO> postDTOList = mockService.showPostsService();
 
         //검증: 예상되는 결과 확인
         assertThat(postDTOList).isNotNull();
@@ -100,7 +102,7 @@ public class PostServiceTest {
         //2. mediaReposioty에 저장->savedMediaList 리턴
         when(mockMediaRepository.saveAll(anyList())).thenReturn(Arrays.asList(savedMeida1,savedMedia2));
         //3.주입한 service 계층의 메소드 직접 사용 및 리턴 값 저장
-        PostAndMediaDTO resultDTO = mockPostService.createPost(postDTO,mediaDTOList);
+        PostAndMediaDTO resultDTO = mockService.createPost(postDTO,mediaDTOList);
 
         //given-실제와 test 케이스가 맞는지 확인
         assertThat(resultDTO.getPostDTO().getPostId()).isEqualTo(1L);
@@ -153,7 +155,7 @@ public class PostServiceTest {
         List<MediaDTO> inputMediaDTOList = Arrays.asList(inputMediaDTO2, inputMediaDTO3);
         PostAndMediaDTO inputPostAndDTOList = new PostAndMediaDTO(inputPostDTO,inputMediaDTOList);
         // 실제 서비스 메서드 호출
-        PostAndMediaDTO updatedResult = mockPostService.updatePost(postId, inputPostAndDTOList);
+        PostAndMediaDTO updatedResult = mockService.updatePost(postId, inputPostAndDTOList);
 
         // then: 결과 검증
         assertThat(updatedResult.getPostDTO().getPostTitle()).isEqualTo("수정된 제목");
@@ -164,7 +166,9 @@ public class PostServiceTest {
         // verify: Mock 객체의 메서드 호출 확인
         verify(mockMediaRepository, times(1)).deleteAllById(List.of(deleteList));
     }
-    
+
+    //미디어 결합 완료
+    //comment 결합 완료
     @DisplayName("게시글을 성공적으로 삭제한다.")
     @Test
     void deletePostSucessfully(){
@@ -174,14 +178,17 @@ public class PostServiceTest {
         //when-mock,실제
         doNothing().when(mockPostRepository).deleteById(anyLong());
         doNothing().when(mockMediaRepository).deleteAllByPostPostId(anyLong());
-        mockPostService.deletePost(postId);
+        doNothing().when(mockCommentRepository).deleteAllByPostPostId(anyLong());
+        mockService.deletePost(postId);
 
         //then
         verify(mockPostRepository).deleteById(postId);
         verify(mockMediaRepository).deleteAllByPostPostId(postId);
+        verify(mockCommentRepository).deleteAllByPostPostId(postId);
     }
     
     //미디어 결합 완료
+    //comment 결합 완료
     @DisplayName("게시글을 성공적으로 조회한다")
     @Test
     void showPost(){
@@ -200,15 +207,27 @@ public class PostServiceTest {
         //showPost()에서 최종 리턴 할 값
         PostAndMediaDTO postAndMediasDTO = new PostAndMediaDTO(post.toDTO(),mediaDTOList);
 
+        //comment 추가
+        //given-받아올 값:없음,리파지토리 리턴 값: commentEntityList,service.showPost리턴값: PostAndMediaAndCommentDTO
+        List<Comment> existingCommentEntityList = Arrays.asList(
+                new Comment(1L,"댓글1",now,post),
+                new Comment(2L,"댓글2",now.plusHours(1),post),
+                new Comment(3L,"댓글3",now.plusHours(2),post)
+        );
+
+        List<CommentDTO> existingCommentDTOList = existingCommentEntityList.stream()
+                .map(Comment::toDTO).toList();
+        PostAndMediaAndCommentDTO postAndMediaAndCommentDTO = new PostAndMediaAndCommentDTO(post.toDTO(),mediaDTOList,existingCommentDTOList);
 
         //----------------------------------------------------------------------------------------------------------
         //when-리파지토리 find/return entity real real:service(id)
         when(mockPostRepository.findByIdOrElseThrow(anyLong())).thenReturn(post);
         //when media관련 추가-리파지토리에서 findxxx로 찾고 리턴값은 엔티티이다. 실제: 변하지 않음
         when(mockMediaRepository.findAllByPostPostId(anyLong())).thenReturn(Arrays.asList(jpegImage,pngImage));
+        //when-테스트할 메소드: repositoty.findAllByPostPostId->commentEntityList/실제 service.showPost()->PostAndMediaAndCommentDTO
+        when(mockCommentRepository.findAllByPostPostId(postId)).thenReturn(existingCommentEntityList);
+        PostAndMediaAndCommentDTO result = mockService.showPost(postId);
 
-
-        PostAndMediaDTO result = mockPostService.showPost(postId);
         //then-비교-post
         assertThat(result.getPostDTO().getPostContent()).isEqualTo("내용1");
         assertThat(result.getPostDTO().getPostTitle()).isEqualTo("제목1");
@@ -221,8 +240,66 @@ public class PostServiceTest {
         verify(mockPostRepository).findByIdOrElseThrow(postId);
         verify(mockMediaRepository).findAllByPostPostId(postId);
 
-        //red:Cannot invoke "com.example.BoardService.dto.PostDTO.getPostContent()" because "result" is null
+        //then-확인할 값:comment id,contnet,commentTime/findAllByPostPostId한번만 실행되는거 확인
 
     }
 
+    //댓글 생성
+    @DisplayName("댓글을 성공적으로 생성한다.")
+    @Test
+    void createComment(){
+        //given-1.받아올값: postId,CommentDTO/when(repository)의 반환값:commentEntity/최종 리턴 값: commentDTO
+        Long postId = 1L;
+        CommentDTO inputCommentDTO = new CommentDTO(null,"댓글1",null);
+
+        Post post = new Post(1L,"제목1","내용1",now.minusHours(1));
+        Comment createdCommentEntity = new Comment(1L,"댓글1",now,post);
+
+        CommentDTO createdCommentDTO = new CommentDTO(1L,"댓글1",now);
+
+        //when-repository에 넣고 entity반환
+        when(mockCommentRepository.save(any(Comment.class))).thenReturn(createdCommentEntity);
+
+        //act-service.createCommnet에 넣은 결과
+        CommentDTO result = mockService.createComment(postId,inputCommentDTO);
+
+        //then-assertThat:댓글id,내용,시간 비교/verify:save가 한번 사용되었는지,postRe에서 post가 한번 꺼내 졌는지 확인
+        assertThat(result).isNotNull();
+        assertThat(result.getCommentId()).isEqualTo(1L);
+        assertThat(result.getCommentContent()).isEqualTo("댓글1");
+        assertThat(result.getCommentTime()).isEqualTo(now);
+
+        verify(mockCommentRepository).save(any(Comment.class));
+        verify(mockPostRepository).findByIdOrElseThrow(anyLong());
+    }
+
+
+    @DisplayName("댓글을 성공적으로 수정한다.")
+    @Test
+    void updateComment(){
+        //before-수정전 값: commentEntity
+        Comment existingCommnetEntity = new Comment(1L,"댓글",now.minusHours(1),new Post());
+        when(mockCommentRepository.findByIdOrElseThrow(anyLong())).thenReturn(existingCommnetEntity);
+
+        //given-받아올 값: commentdto,commnetId/원래 저장되어있던 값:commentEntity/when(repository)의 반환값: commententity/최종적으로 반환할 값: commentdto
+        Long commentId = 1L;
+        CommentDTO updateCommentRequestDTO = new CommentDTO(null,"댓글수정",now);
+        Comment expectedCommentEntity = new Comment(1L,"댓글수정",now,new Post());
+        CommentDTO expectedCommentDTO = new CommentDTO(1L,"댓글수정",now);
+
+        //when-repository에 저장후 반환값:comment
+        when(mockCommentRepository.save(any(Comment.class))).thenReturn(expectedCommentEntity);
+        
+        //act-실제 서비스 
+        CommentDTO result = mockService.updateComment(commentId,updateCommentRequestDTO);
+
+        //then-assertThat:댓글id,내용,시간 비교/verify:save가 한번 사용되었는지,commentRe에서  findbyid가 1번 사용되었는지
+        assertThat(result).isNotNull();
+        assertThat(result.getCommentId()).isEqualTo(1L);
+        assertThat(result.getCommentContent()).isEqualTo("댓글수정");
+        assertThat(result.getCommentTime()).isNotNull();
+
+        verify(mockCommentRepository,times(1)).findByIdOrElseThrow(anyLong());
+        verify(mockCommentRepository,times(1)).save(any(Comment.class));
+    }
 }

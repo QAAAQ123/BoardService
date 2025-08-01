@@ -1,32 +1,33 @@
 package com.example.BoardService.service;
 
-import com.example.BoardService.dto.MediaDTO;
-import com.example.BoardService.dto.PostAndMediaDTO;
-import com.example.BoardService.dto.PostDTO;
+import com.example.BoardService.dto.*;
+import com.example.BoardService.entity.Comment;
 import com.example.BoardService.entity.Media;
 import com.example.BoardService.entity.Post;
+import com.example.BoardService.repository.CommentRepository;
 import com.example.BoardService.repository.MediaRepository;
 import com.example.BoardService.repository.PostRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Service
+@org.springframework.stereotype.Service
 @Slf4j
-public class PostService {
+public class Service {
 
     @Autowired
     private PostRepository postRepository;
 
     @Autowired
     private MediaRepository mediaRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     public List<PostDTO> showPostsService() {
         //user_id를 제외한 모든 엔티티를 DTO로 변환해야 한다.
@@ -98,32 +99,61 @@ public class PostService {
     }
 
     //media 결합 완료
+    //comment 결합 완료
     public void deletePost(Long postId) {
         postRepository.deleteById(postId);
         mediaRepository.deleteAllByPostPostId(postId);
+        commentRepository.deleteAllByPostPostId(postId);
     }
 
     //media 결합 완료
-    public PostAndMediaDTO showPost(Long postId) {
-        //id로 리포지토리 조회해서 엔티티 가져오기->엔티팉 dto로 변환동시에 리턴
-        Post post = postRepository.findByIdOrElseThrow(postId);
+    //comment 결합 완료
+    public PostAndMediaAndCommentDTO showPost(Long postId) {
 
-        //미디어 리포지토리 postId로 조회해서 리스트 만든후에 DTO로 변환
+        Post post = postRepository.findByIdOrElseThrow(postId);
         List<Media> mediaList = mediaRepository.findAllByPostPostId(postId);
-        System.out.println(mediaList.get(0));
-        System.out.println(mediaList.get(1));
+        List<Comment> commentList = commentRepository.findAllByPostPostId(postId);
 
         //DTO 합침
-        PostAndMediaDTO postAndMediasDTO = new PostAndMediaDTO(post.toDTO(),
-                mediaList.stream()
-                        .map(Media::toDTO)
-                        .collect(Collectors.toList())
-        );
+        List<MediaDTO> mediaDTOList = mediaList.stream()
+                .map(Media::toDTO)
+                .collect(Collectors.toList());
+        List<CommentDTO> commentDTOList = commentList.stream()
+                .map(Comment::toDTO)
+                .collect(Collectors.toList());
 
-        return postAndMediasDTO;
+        PostAndMediaAndCommentDTO postAndMediaAndCommentDTO =
+                new PostAndMediaAndCommentDTO(post.toDTO(), mediaDTOList, commentDTOList);
+
+        return postAndMediaAndCommentDTO;
+
+    }
+    //글
+    //----------------------------------------------------------------------------------------------------------------
+    //댓글
+    public CommentDTO createComment(Long postId, CommentDTO createCommentRequestDTO) {
+        //dto를 엔티티로 변환 -> post와 연결 -> repository에 저장 -> DTO로 바꿔서 return
+        Comment inputCommentEntity = createCommentRequestDTO.toEntity();
+        inputCommentEntity.setPost(postRepository.findByIdOrElseThrow(postId));
+        Comment savedCommentEntity = commentRepository.save(inputCommentEntity);
+
+        return savedCommentEntity.toDTO();
     }
 
+    public CommentDTO updateComment(Long commentId,CommentDTO updateCommentRequestDTO){
+        //1. DTO를 엔티티로 변환
+        Comment updateCommentRequestEntity = updateCommentRequestDTO.toEntity();
+        //2. 기존에 존재하는 엔티티 꺼내옴
+        Comment existingCommentEntity = commentRepository.findByIdOrElseThrow(commentId);
+        //3. 2개의 엔티티를 병합 4. 병합된 엔티티를 리파지터리에 저장
+        Comment savedCommentEntity =
+                commentRepository.save(mergeComment(updateCommentRequestEntity,existingCommentEntity));
 
+        return savedCommentEntity.toDTO();
+    }
+    //댓글
+    //----------------------------------------------------------------------------------------------------------------
+    //내부 메소드
     private Post mergePostEntity(Post targetPostEntity, Post inputPostEntity) {
         boolean hasChanged = false;
         //title,content 새로운 것만 target에 넣기
@@ -179,7 +209,7 @@ public class PostService {
             //existing과 input의 id가 같다면 병합
             Long id = inputMedia.getMediaId();
             if (existingMediaMap.containsKey(id)) {
-                updatedMediaList.add(mergeMeida(inputMedia,existingMediaMap.get(id)));
+                updatedMediaList.add(mergeMeida(inputMedia, existingMediaMap.get(id)));
                 existingMediaMap.remove(id); //삭제해야할 미디어만 existingMap에 남게한다.
             } else {//두개의 id가 다른 것중 inputMeida에만 있는 것,즉 리파지토리에 넣어야할 데이터만 updatedMediaList에 넣는다.
                 updatedMediaList.add(inputMedia);
@@ -198,11 +228,21 @@ public class PostService {
     }
 
     private Media mergeMeida(Media inputMedia, Media media) {
-        if(!inputMedia.getMediaType().equals(media.getMediaType()))
+        if (!inputMedia.getMediaType().equals(media.getMediaType()))
             media.setMediaType(inputMedia.getMediaType());
-        if(!inputMedia.getMediaContent().equals(media.getMediaContent()))
+        if (!inputMedia.getMediaContent().equals(media.getMediaContent()))
             media.setMediaContent(inputMedia.getMediaContent());
 
         return media;
     }
+
+    private Comment mergeComment(Comment updateCommentRequestEntity, Comment existingCommentEntity) {
+        if(!updateCommentRequestEntity.getCommentContent().isEmpty() || updateCommentRequestEntity.getCommentContent() != null){
+            existingCommentEntity.setCommentContent(updateCommentRequestEntity.getCommentContent());
+            existingCommentEntity.setCommentTime(LocalDateTime.now());
+        }
+        return existingCommentEntity;
+    }
+
 }
+
