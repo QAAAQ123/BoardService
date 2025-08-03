@@ -9,6 +9,8 @@ import com.example.BoardService.repository.MediaRepository;
 import com.example.BoardService.repository.PostRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @org.springframework.stereotype.Service
+@Transactional
 @Slf4j
 public class Service {
 

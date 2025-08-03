@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
+@Table(name = "comment")
 public class Comment {
 
     @Id
@@ -28,7 +29,7 @@ public class Comment {
     private LocalDateTime commentTime;
 
     @ManyToOne
-    @Column(name = "post_id")
+    @JoinColumn(name = "post_id")
     private Post post;
 
     public CommentDTO toDTO() {

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메인 페이지</title>
+</head>
+<body>
+<h1>게시물 목록</h1>
+<div id="posts-container"></div>
+<script>
+    async function fetchPosts() {
+        try {
+            const response = await fetch('/api/posts');
+            const posts = await response.json();
+            displayPosts(posts);
+        } catch (error) {
+            console.error('게시물 목록을 가져오는 중 오류 발생:', error);
+        }
+    }
+    function displayPosts(posts) {
+        const container = document.getElementById('posts-container');
+        container.innerHTML = '';
+        posts.forEach(post => {
+            const postDiv = document.createElement('div');
+            postDiv.innerHTML = `
+                <h3><a href="/main/${post.postId}">${post.title}</a></h3>
+                <p>${post.content}</p>
+            `;
+            container.appendChild(postDiv);
+        });
+    }
+    fetchPosts();
+</script>
+</body>
+</html>

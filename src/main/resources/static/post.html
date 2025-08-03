@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시물 상세</title>
+</head>
+<body>
+<div id="post-detail"></div>
+<div id="comments-container"></div>
+<script>
+    async function fetchPostDetail() {
+        const postId = window.location.pathname.split('/').pop();
+        try {
+            const response = await fetch(`/api/posts/${postId}`);
+            const post = await response.json();
+            displayPost(post);
+        } catch (error) {
+            console.error('게시물 상세 정보를 가져오는 중 오류 발생:', error);
+        }
+    }
+    function displayPost(post) {
+        const detailContainer = document.getElementById('post-detail');
+        detailContainer.innerHTML = `
+            <h1>${post.postTitle}</h1>
+            <p>${post.postContent}</p>
+        `;
+        // 댓글 표시 로직 등 추가 가능
+    }
+    fetchPostDetail();
+</script>
+</body>
+</html>
