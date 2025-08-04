@@ -52,6 +52,7 @@ public class Service {
     //media 결합 완료
     //user 결합 해야함
     public PostAndMediaDTO createPost(PostDTO postDTO, List<MediaDTO> mediaDTOList) {
+        postDTO.setPostTime(LocalDateTime.now());
         //postrepository에 postEntity저장
         Post savedPostEntity = postRepository.save(postDTO.toEntity());
 
@@ -146,6 +147,7 @@ public class Service {
     //user 결합 해야함
     public CommentDTO createComment(Long postId, CommentDTO createCommentRequestDTO) {
         //dto를 엔티티로 변환 -> post와 연결 -> repository에 저장 -> DTO로 바꿔서 return
+        createCommentRequestDTO.setCommentTime(LocalDateTime.now());
         Comment inputCommentEntity = createCommentRequestDTO.toEntity();
         inputCommentEntity.setPost(postRepository.findByIdOrElseThrow(postId));
         Comment savedCommentEntity = commentRepository.save(inputCommentEntity);
@@ -168,6 +170,7 @@ public class Service {
     //댓글
 
     public void joinUser(UserDTO saveRequestUserDTO) {
+        saveRequestUserDTO.setUserTime(LocalDateTime.now());
         userRepository.save(saveRequestUserDTO.toEntity());
     }
 
