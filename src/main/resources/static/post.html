@@ -7,27 +7,62 @@
 </head>
 <body>
 <div id="post-detail"></div>
+<hr>
 <div id="comments-container"></div>
+
 <script>
-    async function fetchPostDetail() {
+    // 페이지 로드 시 게시물과 댓글을 가져옵니다.
+    document.addEventListener('DOMContentLoaded', () => {
         const postId = window.location.pathname.split('/').pop();
+        fetchPostAndComments(postId);
+    });
+
+    async function fetchPostAndComments(postId) {
         try {
+            // 게시물 상세 조회 API만 호출합니다. 댓글 정보가 게시물 DTO에 포함되어 있습니다.
             const response = await fetch(`/api/posts/${postId}`);
-            const post = await response.json();
+            if (!response.ok) {
+                throw new Error('네트워크 응답 오류');
+            }
+
+            const data = await response.json();
+            const post = data.postDTO;
+            const comments = data.commentDTOList;
+
             displayPost(post);
+            displayComments(comments);
+
         } catch (error) {
-            console.error('게시물 상세 정보를 가져오는 중 오류 발생:', error);
+            console.error('데이터를 가져오는 중 오류 발생:', error);
+            document.getElementById('post-detail').innerHTML = '<p>게시물을 불러올 수 없습니다.</p>';
         }
     }
+
     function displayPost(post) {
         const detailContainer = document.getElementById('post-detail');
         detailContainer.innerHTML = `
             <h1>${post.postTitle}</h1>
             <p>${post.postContent}</p>
         `;
-        // 댓글 표시 로직 등 추가 가능
     }
-    fetchPostDetail();
+
+    function displayComments(comments) {
+        const commentsContainer = document.getElementById('comments-container');
+        commentsContainer.innerHTML = '<h2>댓글</h2>';
+
+        if (!comments || comments.length === 0) {
+            commentsContainer.innerHTML += '<p>작성된 댓글이 없습니다.</p>';
+            return;
+        }
+
+        const commentsList = document.createElement('ul');
+        comments.forEach(comment => {
+            const li = document.createElement('li');
+            li.innerHTML = `<b>댓글 ID: ${comment.commentId}</b>: ${comment.commentContent}`;
+            commentsList.appendChild(li);
+        });
+        commentsContainer.appendChild(commentsList);
+    }
 </script>
 </body>
 </html>

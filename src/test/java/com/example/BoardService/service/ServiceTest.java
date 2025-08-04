@@ -1,12 +1,8 @@
 package com.example.BoardService.service;
 
 import com.example.BoardService.dto.*;
-import com.example.BoardService.entity.Comment;
-import com.example.BoardService.entity.Media;
-import com.example.BoardService.entity.Post;
-import com.example.BoardService.repository.CommentRepository;
-import com.example.BoardService.repository.MediaRepository;
-import com.example.BoardService.repository.PostRepository;
+import com.example.BoardService.entity.*;
+import com.example.BoardService.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,6 +31,9 @@ public class ServiceTest {
 
     @Mock
     private CommentRepository mockCommentRepository;
+
+    @Mock
+    private UserRepository mockUserRepository;
 
     @InjectMocks
     private Service mockService;
@@ -247,7 +246,7 @@ public class ServiceTest {
     //댓글 생성
     @DisplayName("댓글을 성공적으로 생성한다.")
     @Test
-    void createComment(){
+    void createCommentSucessfully(){
         //given-1.받아올값: postId,CommentDTO/when(repository)의 반환값:commentEntity/최종 리턴 값: commentDTO
         Long postId = 1L;
         CommentDTO inputCommentDTO = new CommentDTO(null,"댓글1",null);
@@ -276,7 +275,7 @@ public class ServiceTest {
 
     @DisplayName("댓글을 성공적으로 수정한다.")
     @Test
-    void updateComment(){
+    void updateCommentSucessfully(){
         //before-수정전 값: commentEntity
         Comment existingCommnetEntity = new Comment(1L,"댓글",now.minusHours(1),new Post());
         when(mockCommentRepository.findByIdOrElseThrow(anyLong())).thenReturn(existingCommnetEntity);
@@ -301,5 +300,8 @@ public class ServiceTest {
 
         verify(mockCommentRepository,times(1)).findByIdOrElseThrow(anyLong());
         verify(mockCommentRepository,times(1)).save(any(Comment.class));
+    }
+
+
     }
 }

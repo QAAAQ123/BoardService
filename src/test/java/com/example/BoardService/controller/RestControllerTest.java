@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -66,7 +67,7 @@ public class RestControllerTest {
         List<PostDTO> mockDTO = new ArrayList<>(list);
         when(mockService.showPostsService()).thenReturn(mockDTO);
 
-        mockMvc.perform(get("/posts")
+        mockMvc.perform(get("/api/posts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .with(user("testuser").roles("USER")))
                 .andDo(print())
@@ -107,7 +108,7 @@ public class RestControllerTest {
 
 
         //then-서버와 클라이언트간 request,response확인
-        mockMvc.perform(post("/posts")
+        mockMvc.perform(post("/api/posts")
                         .with(csrf()) // CSRF 토큰 추가
                         .contentType(MediaType.APPLICATION_JSON) // JSON 데이터 전송임을 명시
                         .content(requestBodyJson) // 생성한 JSON 본문 추가
@@ -142,7 +143,7 @@ public class RestControllerTest {
         when(mockService.updatePost(anyLong(), any(PostAndMediaDTO.class))).thenReturn(updatedPostAndDTOList);
 
         //when+then - mockMvc
-        mockMvc.perform(put("/posts/{postId}", postId)
+        mockMvc.perform(put("/api/posts/{postId}", postId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputPostAndMediaDTO)))
@@ -163,7 +164,7 @@ public class RestControllerTest {
         doNothing().when(mockService).deletePost(anyLong());
 
         //when실제 + then(when의 실제 동작이 클라이언트에서 요청 받아 데이터 보내는것)
-        mockMvc.perform(delete("/posts/{postId}", postId)
+        mockMvc.perform(delete("/api/posts/{postId}", postId)
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isNoContent());
@@ -200,7 +201,7 @@ public class RestControllerTest {
         when(mockService.showPost(anyLong())).thenReturn(postAndMediaAndCommentDTO);
 
         //then postId받아와서 postDTO 클라이언트로
-        mockMvc.perform(get("/posts/{postId}", postId)
+        mockMvc.perform(get("/api/posts/{postId}", postId)
                         .with(csrf()))
                 .andDo(print()) // 요청/응답 상세 로그 출력
                 .andExpect(status().isOk())
@@ -228,7 +229,7 @@ public class RestControllerTest {
         when(mockService.createComment(anyLong(),any(CommentDTO.class))).thenReturn(expectedCommentRequestDTO);
 
         //then
-        mockMvc.perform(post("/posts/{postId}/comments",postId)
+        mockMvc.perform(post("/api/posts/{postId}/comments",postId)
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createCommentRequestDTO)))
@@ -255,7 +256,7 @@ public class RestControllerTest {
         when(mockService.updateComment(anyLong(),any(CommentDTO.class))).thenReturn(savedCommentRequestDTO);
 
         //then
-        mockMvc.perform(put("/posts/{postId}/comments/{commentId}",postId,commentId)
+        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}",postId,commentId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateCommentRequestDTO)))
