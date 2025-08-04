@@ -12,13 +12,13 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class UserDTO {
-    private Long id;
+    private Long userId;
     private String username;
     private String password;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime userTime;
 
     public User toEntity() {
-        return new User(this.id,this.username,this.password,this.userTime);
+        return new User(this.userId,this.username,this.password,this.userTime);
     }
 }

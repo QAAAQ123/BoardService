@@ -1,5 +1,6 @@
 package com.example.BoardService.controller;
 
+import com.example.BoardService.SecurityConfig;
 import com.example.BoardService.dto.*;
 import com.example.BoardService.service.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -28,11 +30,11 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
 @WebMvcTest(RestController.class)
+@Import(SecurityConfig.class)
 public class RestControllerTest {
 
     @Autowired
@@ -222,17 +224,17 @@ public class RestControllerTest {
     void createCommentEndpointSuccessfully() throws Exception {
         //given-1.들어올 값: postId,commentDTO/service메소드 파리미터로 들어갈 값: postId,commentDTO/최종적으로 반환할 값: commentDTO
         Long postId = 1L;
-        CommentDTO createCommentRequestDTO = new CommentDTO(null,"댓글1",null);
-        CommentDTO expectedCommentRequestDTO = new CommentDTO(1L,"댓글1",now);
+        CommentDTO createCommentRequestDTO = new CommentDTO(null, "댓글1", null);
+        CommentDTO expectedCommentRequestDTO = new CommentDTO(1L, "댓글1", now);
 
         //when-service가 무엇을 리턴하는지
-        when(mockService.createComment(anyLong(),any(CommentDTO.class))).thenReturn(expectedCommentRequestDTO);
+        when(mockService.createComment(anyLong(), any(CommentDTO.class))).thenReturn(expectedCommentRequestDTO);
 
         //then
-        mockMvc.perform(post("/api/posts/{postId}/comments",postId)
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createCommentRequestDTO)))
+        mockMvc.perform(post("/api/posts/{postId}/comments", postId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createCommentRequestDTO)))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$").isNotEmpty())
@@ -248,15 +250,15 @@ public class RestControllerTest {
         //given-들어올 값:postId,commentId,commentDTO/service의 메소드로 들어갈 값: commentId,commentDTO/최종적으로 반환할 값: commentDTO
         Long postId = 1L;
         Long commentId = 1L;
-        CommentDTO updateCommentRequestDTO = new CommentDTO(null,"댓글수정",now.minusHours(1));
+        CommentDTO updateCommentRequestDTO = new CommentDTO(null, "댓글수정", now.minusHours(1));
 
-        CommentDTO savedCommentRequestDTO = new CommentDTO(1L,"댓글수정",now);
+        CommentDTO savedCommentRequestDTO = new CommentDTO(1L, "댓글수정", now);
 
         //when-service.updatecomment가 리턴할 값
-        when(mockService.updateComment(anyLong(),any(CommentDTO.class))).thenReturn(savedCommentRequestDTO);
+        when(mockService.updateComment(anyLong(), any(CommentDTO.class))).thenReturn(savedCommentRequestDTO);
 
         //then
-        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}",postId,commentId)
+        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", postId, commentId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateCommentRequestDTO)))
@@ -268,4 +270,41 @@ public class RestControllerTest {
 
     }
 
+    @DisplayName("POST /join 요청시 user를 성공적으로 저장한다.")
+    @Test
+    void joinUserEndpointSucessfully() throws Exception {
+        //given-들어올 값: userdto/서비스에 넣을 값:userdto/컨트롤러에서 리턴 할 값:없음
+        UserDTO saveRequestUserDTO = new UserDTO(null, "userName", "userPassword", null);
+
+        //when-서비스에 넣음,리턴값 없음
+        doNothing().when(mockService).joinUser(any(UserDTO.class));
+
+        mockMvc.perform(post("/api/join")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(saveRequestUserDTO)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$").doesNotExist());
+    }
+
+
+    @DisplayName("POST /login 요청시 성공적으로 로그인 한다.")
+    @Test
+    void loginUserEndpointSucessfully() throws Exception {
+        //given-들어올 값:userdto/ 서비스에 들어갈 값:userDTO/ 최종적으로 반환할 값: Boolean
+        UserDTO loginUserRequestDTO = new UserDTO(null, "userName", "userPassword", null);
+        Boolean isLoginSucessful = true;
+
+        //when-서비스에 넣음,리턴값:Boolean-true
+        when(mockService.loginUser(any(UserDTO.class))).thenReturn(true);
+
+        mockMvc.perform(post("/api/login")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginUserRequestDTO)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
+
+
+    }
 }

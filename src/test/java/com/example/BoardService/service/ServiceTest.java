@@ -191,7 +191,7 @@ public class ServiceTest {
     @DisplayName("게시글을 성공적으로 조회한다")
     @Test
     void showPost(){
-        //given-받아올 값: id,리턴할 값: post dto,리파지토리 리턴값:postentity
+        //given-받아올 값: userId,리턴할 값: post dto,리파지토리 리턴값:postentity
         Long postId = 1L;
         Post post = new Post(1L,"제목1","내용1",now);
 
@@ -219,7 +219,7 @@ public class ServiceTest {
         PostAndMediaAndCommentDTO postAndMediaAndCommentDTO = new PostAndMediaAndCommentDTO(post.toDTO(),mediaDTOList,existingCommentDTOList);
 
         //----------------------------------------------------------------------------------------------------------
-        //when-리파지토리 find/return entity real real:service(id)
+        //when-리파지토리 find/return entity real real:service(userId)
         when(mockPostRepository.findByIdOrElseThrow(anyLong())).thenReturn(post);
         //when media관련 추가-리파지토리에서 findxxx로 찾고 리턴값은 엔티티이다. 실제: 변하지 않음
         when(mockMediaRepository.findAllByPostPostId(anyLong())).thenReturn(Arrays.asList(jpegImage,pngImage));
@@ -239,7 +239,7 @@ public class ServiceTest {
         verify(mockPostRepository).findByIdOrElseThrow(postId);
         verify(mockMediaRepository).findAllByPostPostId(postId);
 
-        //then-확인할 값:comment id,contnet,commentTime/findAllByPostPostId한번만 실행되는거 확인
+        //then-확인할 값:comment userId,contnet,commentTime/findAllByPostPostId한번만 실행되는거 확인
 
     }
 
@@ -302,6 +302,37 @@ public class ServiceTest {
         verify(mockCommentRepository,times(1)).save(any(Comment.class));
     }
 
+    @DisplayName("유저정보를 성공적으로 저장한다.")
+    @Test
+    void saveUserSucessfully(){
+        //given-받아올 값: userDTO/repository의 반환 값: userEntity/서비스 메소드의 최종 반환 값: void
+        UserDTO saveUserRequestDTO = new UserDTO(null,"userName","userPassword",null);
+        User savedUserEntity = new User(1L,"userName","userPassword",now);
 
+        //when-repository에 저장할 값과 반환값
+        when(mockUserRepository.save(any(User.class))).thenReturn(savedUserEntity);
+
+        //act-service는 void를 반환
+        mockService.joinUser(saveUserRequestDTO);
+
+        verify(mockUserRepository,times(1)).save(any(User.class));
+    }
+
+    @DisplayName("유저 로그인을 위한 유저 정보 확인을 성공적으로 수행한다.")
+    @Test
+    void loginUserSucessfully(){
+        //given-받아올값: userDTO/ repository 반환값: userEntity/ 메소드의 최종 리턴값: Boolean
+        UserDTO loginUserRequestDTO = new UserDTO(null,"userName","userPassword",null);
+        User existingUserEntity = new User(1L,"userName","userPassword",now.minusHours(1));
+        Boolean isLoginSuccessful = true;
+
+        //when-repository 들어갈 값: userentity/repository 최종 리턴값: userEntity
+        when(mockUserRepository.findByUsername(anyString())).thenReturn(existingUserEntity);
+
+        //act-서비스 계층 최종 반환값: Boolean
+        Boolean result = mockService.loginUser(loginUserRequestDTO);
+
+        assertThat(result.booleanValue()).isTrue();
+        verify(mockUserRepository,times(1)).findByUsername(anyString());
     }
 }

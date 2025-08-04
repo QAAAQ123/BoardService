@@ -4,9 +4,11 @@ import com.example.BoardService.dto.*;
 import com.example.BoardService.entity.Comment;
 import com.example.BoardService.entity.Media;
 import com.example.BoardService.entity.Post;
+import com.example.BoardService.entity.User;
 import com.example.BoardService.repository.CommentRepository;
 import com.example.BoardService.repository.MediaRepository;
 import com.example.BoardService.repository.PostRepository;
+import com.example.BoardService.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +34,9 @@ public class Service {
     @Autowired
     private CommentRepository commentRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     public List<PostDTO> showPostsService() {
         //user_id를 제외한 모든 엔티티를 DTO로 변환해야 한다.
         List<Post> postList = postRepository.findAll();
@@ -45,6 +50,7 @@ public class Service {
     }
 
     //media 결합 완료
+    //user 결합 해야함
     public PostAndMediaDTO createPost(PostDTO postDTO, List<MediaDTO> mediaDTOList) {
         //postrepository에 postEntity저장
         Post savedPostEntity = postRepository.save(postDTO.toEntity());
@@ -69,6 +75,7 @@ public class Service {
     }
 
     //media 결합 완료
+    //user 추가해야함
     public PostAndMediaDTO updatePost(Long postId, PostAndMediaDTO inputPostAndMediaDTO) {
         /*받아온 inputDto에는 postID가 없다.
         받아온 DTO를 post와 media로 분리V
@@ -103,6 +110,7 @@ public class Service {
 
     //media 결합 완료
     //comment 결합 완료
+    //user 추가해야함
     public void deletePost(Long postId) {
         postRepository.deleteById(postId);
         mediaRepository.deleteAllByPostPostId(postId);
@@ -111,6 +119,7 @@ public class Service {
 
     //media 결합 완료
     //comment 결합 완료
+    //user 결합 해야함-로그인하지 않은 유저는 게시글을 보지 못함
     public PostAndMediaAndCommentDTO showPost(Long postId) {
 
         Post post = postRepository.findByIdOrElseThrow(postId);
@@ -134,6 +143,7 @@ public class Service {
     //글
     //----------------------------------------------------------------------------------------------------------------
     //댓글
+    //user 결합 해야함
     public CommentDTO createComment(Long postId, CommentDTO createCommentRequestDTO) {
         //dto를 엔티티로 변환 -> post와 연결 -> repository에 저장 -> DTO로 바꿔서 return
         Comment inputCommentEntity = createCommentRequestDTO.toEntity();
@@ -143,6 +153,7 @@ public class Service {
         return savedCommentEntity.toDTO();
     }
 
+    //user 결합 해야함
     public CommentDTO updateComment(Long commentId,CommentDTO updateCommentRequestDTO){
         //1. DTO를 엔티티로 변환
         Comment updateCommentRequestEntity = updateCommentRequestDTO.toEntity();
@@ -155,6 +166,18 @@ public class Service {
         return savedCommentEntity.toDTO();
     }
     //댓글
+
+    public void joinUser(UserDTO saveRequestUserDTO) {
+        userRepository.save(saveRequestUserDTO.toEntity());
+    }
+
+    public Boolean loginUser(UserDTO loginUserRequestDTO) {
+        User loginUserRequestEntity = loginUserRequestDTO.toEntity();
+        User existingUserEntity = userRepository.findByUsername(loginUserRequestEntity.getUsername());
+
+        return existingUserEntity != null;
+    }
+    //유저
     //----------------------------------------------------------------------------------------------------------------
     //내부 메소드
     private Post mergePostEntity(Post targetPostEntity, Post inputPostEntity) {
@@ -186,7 +209,7 @@ public class Service {
           3. Map으로 연결 되지 않은 meida 데이터가 남음
           3.1 Map으로 연결된 것보다 작은 id값이 input에는 없고,리파지토리에는 있을 때
           -> 리파지토리에서 삭제해야함 -> 따로 분리해서 삭제
-          3.2 Map으로 연결된 것보다 큰 id 값이 inputd에는 있고, 리파지토리에는 없을 때-> 리파지토리에 추가해야함
+          3.2 Map으로 연결된 것보다 큰 userId 값이 inputd에는 있고, 리파지토리에는 없을 때-> 리파지토리에 추가해야함
           */
 
         //1. 리파지토리에 데이터가 있는데 input으로 아무것도 들어오지 않으면 전체 삭제
