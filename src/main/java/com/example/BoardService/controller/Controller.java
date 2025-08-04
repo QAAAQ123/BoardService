@@ -22,12 +22,12 @@ public class Controller {
     @GetMapping("/main/{postId}")
     public String showPostPage(){
         log.info("post page");
-        return "foward:post.html";
+        return "forward:post.html";
     }
 
     @GetMapping("/join")
     public String joinPage(){
         log.info("join page");
-        return "foward:join.html";
+        return "forward:join.html";
     }
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>메인 페이지</title>
+    <title>게시물 목록</title>
 </head>
 <body>
 <h1>게시물 목록</h1>
@@ -12,15 +12,25 @@
     async function fetchPosts() {
         try {
             const response = await fetch('/api/posts');
+            if (!response.ok) {
+                throw new Error('네트워크 응답이 올바르지 않습니다.');
+            }
             const posts = await response.json();
             displayPosts(posts);
         } catch (error) {
             console.error('게시물 목록을 가져오는 중 오류 발생:', error);
+            const container = document.getElementById('posts-container');
+            container.innerHTML = '<p>게시물 목록을 불러오는 데 실패했습니다.</p>';
         }
     }
+
     function displayPosts(posts) {
         const container = document.getElementById('posts-container');
         container.innerHTML = '';
+        if (posts.length === 0) {
+            container.innerHTML = '<p>게시물이 없습니다.</p>';
+            return;
+        }
         posts.forEach(post => {
             const postDiv = document.createElement('div');
             postDiv.innerHTML = `
@@ -30,6 +40,7 @@
             container.appendChild(postDiv);
         });
     }
+
     fetchPosts();
 </script>
 </body>

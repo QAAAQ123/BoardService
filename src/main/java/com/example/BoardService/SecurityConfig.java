@@ -11,16 +11,14 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-//gemini
 public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
-
         http
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/", "/login", "/join", "/main","/*.html").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/login","/api/join","/joinProc").permitAll()
                         .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
-                        .requestMatchers(HttpMethod.GET,"/", "/login", "/join", "/main","/*.html").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/login","/api/join").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf(auth->auth.disable())
@@ -38,9 +36,8 @@ public class SecurityConfig {
                 );
         return http.build();
     }
-
     @Bean
-    public BCryptPasswordEncoder bCryptPasswordEncoder(){
+    public BCryptPasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
     }
 }

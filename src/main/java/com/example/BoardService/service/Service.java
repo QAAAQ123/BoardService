@@ -11,6 +11,7 @@ import com.example.BoardService.repository.PostRepository;
 import com.example.BoardService.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -36,6 +37,9 @@ public class Service {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public List<PostDTO> showPostsService() {
         //user_id를 제외한 모든 엔티티를 DTO로 변환해야 한다.
@@ -169,16 +173,24 @@ public class Service {
     }
     //댓글
 
+    //25/08/04-password encode하여 저장하도록 변경
     public void joinUser(UserDTO saveRequestUserDTO) {
-        saveRequestUserDTO.setUserTime(LocalDateTime.now());
+        User saveRequestUserEntity = saveRequestUserDTO.toEntity();
+        saveRequestUserEntity.setUserTime(LocalDateTime.now());
+        saveRequestUserEntity.setPassword(
+                bCryptPasswordEncoder.encode(saveRequestUserEntity.getPassword()));
         userRepository.save(saveRequestUserDTO.toEntity());
     }
 
+    //25/08/04-password 검증 로직 추가
     public Boolean loginUser(UserDTO loginUserRequestDTO) {
         User loginUserRequestEntity = loginUserRequestDTO.toEntity();
         User existingUserEntity = userRepository.findByUsername(loginUserRequestEntity.getUsername());
 
-        return existingUserEntity != null;
+        if(existingUserEntity == null)
+            return false;
+
+        return bCryptPasswordEncoder.matches(loginUserRequestEntity.getPassword(),existingUserEntity.getPassword());
     }
     //유저
     //----------------------------------------------------------------------------------------------------------------

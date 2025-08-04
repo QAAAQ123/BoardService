@@ -11,6 +11,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,6 +36,9 @@ public class ServiceTest {
 
     @Mock
     private UserRepository mockUserRepository;
+
+    @Mock
+    private BCryptPasswordEncoder encoder;
 
     @InjectMocks
     private Service mockService;
@@ -302,6 +307,7 @@ public class ServiceTest {
         verify(mockCommentRepository,times(1)).save(any(Comment.class));
     }
 
+    //25/08/04-password encoder 테스트 추가
     @DisplayName("유저정보를 성공적으로 저장한다.")
     @Test
     void saveUserSucessfully(){
@@ -311,28 +317,39 @@ public class ServiceTest {
 
         //when-repository에 저장할 값과 반환값
         when(mockUserRepository.save(any(User.class))).thenReturn(savedUserEntity);
+        when(encoder.encode(any(CharSequence.class))).thenReturn("encodedPassword");
 
         //act-service는 void를 반환
         mockService.joinUser(saveUserRequestDTO);
 
         verify(mockUserRepository,times(1)).save(any(User.class));
+        verify(encoder,times(1)).encode(any(CharSequence.class));
     }
 
+    //25/08/04-password encoder 테스트 추가
     @DisplayName("유저 로그인을 위한 유저 정보 확인을 성공적으로 수행한다.")
     @Test
     void loginUserSucessfully(){
-        //given-받아올값: userDTO/ repository 반환값: userEntity/ 메소드의 최종 리턴값: Boolean
-        UserDTO loginUserRequestDTO = new UserDTO(null,"userName","userPassword",null);
-        User existingUserEntity = new User(1L,"userName","userPassword",now.minusHours(1));
-        Boolean isLoginSuccessful = true;
+        // given
+        String rawPassword = "userPassword";
+        String encodedPassword = "encodedPassword";
 
-        //when-repository 들어갈 값: userentity/repository 최종 리턴값: userEntity
+        UserDTO loginUserRequestDTO = new UserDTO(null, "userName", rawPassword, null);
+        User existingUserEntity = new User(1L, "userName", encodedPassword, now.minusHours(1));
+
+        // when
+        // userRepository.findByUsername 호출 시 existingUserEntity 반환
         when(mockUserRepository.findByUsername(anyString())).thenReturn(existingUserEntity);
 
-        //act-서비스 계층 최종 반환값: Boolean
+        // bCryptPasswordEncoder.matches 호출 시 true 반환 (성공 가정)
+        when(encoder.matches(rawPassword, encodedPassword)).thenReturn(true);
+
+        // act
         Boolean result = mockService.loginUser(loginUserRequestDTO);
 
-        assertThat(result.booleanValue()).isTrue();
-        verify(mockUserRepository,times(1)).findByUsername(anyString());
+        // assert
+        assertThat(result).isTrue();
+        verify(mockUserRepository, times(1)).findByUsername(anyString());
+        verify(encoder, times(1)).matches(rawPassword, encodedPassword);
     }
 }
