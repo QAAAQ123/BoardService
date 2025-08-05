@@ -31,6 +31,10 @@ public class Post {
     @Column(name = "post_time")
     private LocalDateTime postTime;
 
+    @JoinColumn(name = "user_id")
+    @ManyToOne
+    private User user;
+
     public PostDTO toDTO() {
         return new PostDTO(this.postId,this.postTitle,this.postContent,this.postTime);
     }

@@ -1,6 +1,7 @@
 package com.example.BoardService.dto;
 
 import com.example.BoardService.entity.Post;
+import com.example.BoardService.entity.User;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,6 +23,6 @@ public class PostDTO {
     private LocalDateTime postTime;
 
     public Post toEntity() {
-        return new Post(this.postId,this.postTitle,this.postContent,this.postTime);
+        return new Post(this.postId,this.postTitle,this.postContent,this.postTime,new User());
     }
 }

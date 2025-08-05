@@ -11,6 +11,8 @@ import com.example.BoardService.repository.PostRepository;
 import com.example.BoardService.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -54,9 +56,13 @@ public class Service {
     }
 
     //media 결합 완료
-    //user 결합 해야함
+    //25/08/05-post에 유저 연결하는 로직 추가
     public PostAndMediaDTO createPost(PostDTO postDTO, List<MediaDTO> mediaDTOList) {
-        postDTO.setPostTime(LocalDateTime.now());
+        Post postEntity = postDTO.toEntity();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        postEntity.setUser(userRepository.findByUsername(auth.getName()));
+        postEntity.setPostTime(LocalDateTime.now());
+
         //postrepository에 postEntity저장
         Post savedPostEntity = postRepository.save(postDTO.toEntity());
 
@@ -80,7 +86,6 @@ public class Service {
     }
 
     //media 결합 완료
-    //user 추가해야함
     public PostAndMediaDTO updatePost(Long postId, PostAndMediaDTO inputPostAndMediaDTO) {
         /*받아온 inputDto에는 postID가 없다.
         받아온 DTO를 post와 media로 분리V
@@ -124,7 +129,6 @@ public class Service {
 
     //media 결합 완료
     //comment 결합 완료
-    //user 결합 해야함-로그인하지 않은 유저는 게시글을 보지 못함
     public PostAndMediaAndCommentDTO showPost(Long postId) {
 
         Post post = postRepository.findByIdOrElseThrow(postId);
@@ -148,18 +152,24 @@ public class Service {
     //글
     //----------------------------------------------------------------------------------------------------------------
     //댓글
-    //user 결합 해야함
+    //25/08/05-comment에 user 정보 삽입하도록 수정
     public CommentDTO createComment(Long postId, CommentDTO createCommentRequestDTO) {
         //dto를 엔티티로 변환 -> post와 연결 -> repository에 저장 -> DTO로 바꿔서 return
-        createCommentRequestDTO.setCommentTime(LocalDateTime.now());
+        //엔티티로 변환
         Comment inputCommentEntity = createCommentRequestDTO.toEntity();
+
+        //필요한 정보 삽입
+        inputCommentEntity.setCommentTime(LocalDateTime.now());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        inputCommentEntity.setUser(userRepository.findByUsername(auth.getName()));
         inputCommentEntity.setPost(postRepository.findByIdOrElseThrow(postId));
+
+        //저장
         Comment savedCommentEntity = commentRepository.save(inputCommentEntity);
 
         return savedCommentEntity.toDTO();
     }
 
-    //user 결합 해야함
     public CommentDTO updateComment(Long commentId,CommentDTO updateCommentRequestDTO){
         //1. DTO를 엔티티로 변환
         Comment updateCommentRequestEntity = updateCommentRequestDTO.toEntity();

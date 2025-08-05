@@ -2,6 +2,7 @@ package com.example.BoardService.dto;
 
 import com.example.BoardService.entity.Comment;
 import com.example.BoardService.entity.Post;
+import com.example.BoardService.entity.User;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,6 +21,6 @@ public class CommentDTO {
     private LocalDateTime commentTime;
 
     public Comment toEntity() {
-        return new Comment(this.commentId,this.commentContent,this.commentTime,new Post());
+        return new Comment(this.commentId,this.commentContent,this.commentTime,new Post(),new User());
     }
 }
