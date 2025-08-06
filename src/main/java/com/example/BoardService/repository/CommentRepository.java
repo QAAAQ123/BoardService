@@ -17,6 +17,7 @@ public interface CommentRepository extends JpaRepository<Comment,Long> {
                 .orElseThrow(() -> new EntityNotFoundException("commentId " + id + "에 해당하는 엔티티가 없습니다."));
     }
 
-    @Query("SELECT c.postId FROM Comment AS c WHERE c.commentContent LIKE %:keyword%")
+    //25/08/06-c.postId를 c.post.postId로 수정하여 UnsatisfiedDependencyException 해결-commit안함
+    @Query("SELECT c.post.postId FROM Comment AS c WHERE c.commentContent LIKE %:keyword%")
     List<Long> searchAllPostIdByKeywordAtComment(@Param("keyword") String keyword);
 }
