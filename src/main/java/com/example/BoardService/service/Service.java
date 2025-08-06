@@ -15,8 +15,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,41 +86,50 @@ public class Service {
     }
 
     //media 결합 완료
-    public PostAndMediaDTO updatePost(Long postId, PostAndMediaDTO inputPostAndMediaDTO) {
-        /*받아온 inputDto에는 postID가 없다.
+    //user 정보 확인하여 작성했던 user와 다르다면 수정하지 않는 로직 추가 필요
+    //25/08/06 user 일치 여부 로직 추가 완료
+    public PostAndMediaDTO updatePost(Long postId, PostAndMediaDTO inputPostAndMediaDTO) throws AccessDeniedException{
+        /*작성유저 정보와 수정 요청 유저 정보가 다르면 수정하지 않음
+        받아온 inputDto에는 postID가 없다.
         받아온 DTO를 post와 media로 분리V
         분리한 dto를 엔티티로 변환V
         post엔티티는 리파지토리에서 꺼내온 데이터와 들어온 데이터를 merge해서 리파지토리에 저장한다.V
         media엔티티는 리파지토리에서 꺼내온 데이터와 비교해야 한다.-메소드로 추상화
         수정을 완료한 entity를 dto로 변환하면서 postandmediadto에 담아서 리턴*/
+        Post existingPostEntity = postRepository.findByIdOrElseThrow(postId);
 
-        //1. 받아온 dto post와 media로 분리+엔티티로 변환
-        Post inputPostEntity = inputPostAndMediaDTO.getPostDTO().toEntity();
-        inputPostEntity.setPostId(postId);
-        List<Media> inputMediaEntityList = inputPostAndMediaDTO.getMediaDTOList().stream()
-                .map(MediaDTO::toEntity)
-                .peek(media -> media.setPost(inputPostEntity))
-                .collect(Collectors.toList());
+        //0. 작성유저 정보와 수정 요청 유저 정보가 다르면 수정하지 않음
+        String requestUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        if(!existingPostEntity.getUser().getUsername().equals(requestUsername))
+            throw new AccessDeniedException("글을 작성한 사용자만 수정이 가능합니다.");
+        else {
+            //1. 받아온 dto post와 media로 분리+엔티티로 변환
+            Post inputPostEntity = inputPostAndMediaDTO.getPostDTO().toEntity();
+            inputPostEntity.setPostId(postId);
+            List<Media> inputMediaEntityList = inputPostAndMediaDTO.getMediaDTOList().stream()
+                    .map(MediaDTO::toEntity)
+                    .peek(media -> media.setPost(inputPostEntity))
+                    .collect(Collectors.toList());
 
-        //2. post엔티티 merge해서 저장
-        Post mergedPostEntity = mergePostEntity(postRepository.findByIdOrElseThrow(postId), inputPostEntity);
-        Post savedPostEntity = postRepository.save(mergedPostEntity);
+            //2. post엔티티 merge해서 저장
+            Post mergedPostEntity = mergePostEntity(existingPostEntity, inputPostEntity);
+            Post savedPostEntity = postRepository.save(mergedPostEntity);
 
-        //3. media엔티티 로직 거쳐서 병합,저장,삭제
-        List<Media> mergedMediaEntityList = mergeMediaEntityList(mediaRepository.findAllByPostPostId(postId), inputMediaEntityList);
-        List<Media> savedMediaEntityList = mediaRepository.saveAll(mergedMediaEntityList);
+            //3. media엔티티 로직 거쳐서 병합,저장,삭제
+            List<Media> mergedMediaEntityList = mergeMediaEntityList(mediaRepository.findAllByPostPostId(postId), inputMediaEntityList);
+            List<Media> savedMediaEntityList = mediaRepository.saveAll(mergedMediaEntityList);
 
-        //4. postandmediadto에 담아서 수정 완료된 값 리턴
-        return new PostAndMediaDTO(savedPostEntity.toDTO(),
-                savedMediaEntityList.stream()
-                        .map(Media::toDTO)
-                        .collect(Collectors.toList()));
+            //4. postandmediadto에 담아서 수정 완료된 값 리턴
+            return new PostAndMediaDTO(savedPostEntity.toDTO(),
+                    savedMediaEntityList.stream()
+                            .map(Media::toDTO)
+                            .collect(Collectors.toList()));
 
+        }
     }
 
     //media 결합 완료
     //comment 결합 완료
-    //user 추가해야함
     public void deletePost(Long postId) {
         postRepository.deleteById(postId);
         mediaRepository.deleteAllByPostPostId(postId);
@@ -170,16 +179,24 @@ public class Service {
         return savedCommentEntity.toDTO();
     }
 
-    public CommentDTO updateComment(Long commentId,CommentDTO updateCommentRequestDTO){
+    //user 정보 확인하여 작성했던 user와 다르다면 수정하지 않는 로직 추가 필요
+    //25/08/06-user 일치 여부 로직 추가 완료
+    public CommentDTO updateComment(Long commentId,CommentDTO updateCommentRequestDTO) throws AccessDeniedException{
         //1. DTO를 엔티티로 변환
         Comment updateCommentRequestEntity = updateCommentRequestDTO.toEntity();
         //2. 기존에 존재하는 엔티티 꺼내옴
         Comment existingCommentEntity = commentRepository.findByIdOrElseThrow(commentId);
-        //3. 2개의 엔티티를 병합 4. 병합된 엔티티를 리파지터리에 저장
-        Comment savedCommentEntity =
-                commentRepository.save(mergeComment(updateCommentRequestEntity,existingCommentEntity));
+        //3. 유저 정보 비교해서 다르면 throws
+        String requestUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        if(!existingCommentEntity.getUser().getUsername().equals(requestUsername))
+            throw new AccessDeniedException("댓글을 작성한 사용자만 수정이 가능합니다.");
+        else {
+            //4. 2개의 엔티티를 병합 4. 병합된 엔티티를 리파지터리에 저장
+            Comment savedCommentEntity =
+                    commentRepository.save(mergeComment(updateCommentRequestEntity, existingCommentEntity));
+            return savedCommentEntity.toDTO();
+        }
 
-        return savedCommentEntity.toDTO();
     }
     //댓글
 

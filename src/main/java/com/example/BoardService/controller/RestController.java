@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.ListResourceBundle;
 
@@ -45,7 +46,7 @@ public class RestController {
     //글 수정
     //media 결합 완료
     @PutMapping("/posts/{postId}")
-    public ResponseEntity<PostAndMediaDTO> updatePost(@PathVariable Long postId,@RequestBody PostAndMediaDTO inputPostAndMediaDTO){
+    public ResponseEntity<PostAndMediaDTO> updatePost(@PathVariable Long postId,@RequestBody PostAndMediaDTO inputPostAndMediaDTO) throws AccessDeniedException {
         //받은 DTO와 postId service로 넘겨줌
         log.info("/api/post/{} PUT Request:Update Post",postId);
         PostAndMediaDTO updatedDTO = service.updatePost(postId,inputPostAndMediaDTO);
@@ -89,7 +90,8 @@ public class RestController {
 
     //댓글 수정
     @PutMapping("/posts/{postId}/comments/{commentId}")
-    public ResponseEntity<CommentDTO> updateComment(@PathVariable Long commentId,@RequestBody CommentDTO updateCommentRequestDTO){
+    public ResponseEntity<CommentDTO> updateComment (@PathVariable Long commentId,
+                                                     @RequestBody CommentDTO updateCommentRequestDTO) throws AccessDeniedException{
         log.info("/api/post/?/comments/{} PUT Reqeust:Update comment",commentId);
         CommentDTO savedCommentRequestDTO = service.updateComment(commentId,updateCommentRequestDTO);
 

@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,33 +67,35 @@ public class ServiceTest {
 
     final LocalDateTime now = LocalDateTime.now();
 
-//    @DisplayName("모든 게시글 목록을 성공적으로 조회한다.")
-//    @Test
-//    void showAllPostSucessfully(){
-//        //준비: postrepository가 반환할 가짜 post 엔티티 목록 설정
-//        List<Post> list = Arrays.asList(
-//                new Post(null,"제목1","내용1",now),
-//                new Post(null ,"제목2","내용2",now)
-//        );
-//
-//        List<Post> mockPosts = new ArrayList<>(list);
-//
-//        when(mockPostRepository.findAll()).thenReturn(mockPosts);//findAll() 호출 시 mockPosts 반환
-//
-//        //실행: 테스트 대상 메서드 호출
-//        List<PostDTO> postDTOList = mockService.showPostsService();
-//
-//        //검증: 예상되는 결과 확인
-//        assertThat(postDTOList).isNotNull();
-//        assertThat(postDTOList).hasSize(2);
-//        assertThat(postDTOList.get(0).getPostTitle()).isEqualTo("제목1");
-//        assertThat(postDTOList.get(1).getPostTitle()).isEqualTo("제목2");
-//        assertThat(postDTOList.get(0).getPostContent()).isEqualTo("내용1");
-//        assertThat(postDTOList.get(1).getPostContent()).isEqualTo("내용2");
-//        assertThat(postDTOList.get(0).getPostTime()).isEqualTo(now);
-//        assertThat(postDTOList.get(1).getPostTime()).isEqualTo(now);
-//
-//    }
+    @DisplayName("모든 게시글 목록을 성공적으로 조회한다.")
+    @Test
+    //25/08/06-User 추가
+    void showAllPostSucessfully(){
+        //준비: postrepository가 반환할 가짜 post 엔티티 목록 설정
+        User user = new User(1L, "유저1", "encodedPassword", now.minusHours(1));
+        List<Post> list = Arrays.asList(
+                new Post(null,"제목1","내용1",now,user),
+                new Post(null ,"제목2","내용2",now,user)
+        );
+
+        List<Post> mockPosts = new ArrayList<>(list);
+
+        when(mockPostRepository.findAll()).thenReturn(mockPosts);//findAll() 호출 시 mockPosts 반환
+
+        //실행: 테스트 대상 메서드 호출
+        List<PostDTO> postDTOList = mockService.showPostsService();
+
+        //검증: 예상되는 결과 확인
+        assertThat(postDTOList).isNotNull();
+        assertThat(postDTOList).hasSize(2);
+        assertThat(postDTOList.get(0).getPostTitle()).isEqualTo("제목1");
+        assertThat(postDTOList.get(1).getPostTitle()).isEqualTo("제목2");
+        assertThat(postDTOList.get(0).getPostContent()).isEqualTo("내용1");
+        assertThat(postDTOList.get(1).getPostContent()).isEqualTo("내용2");
+        assertThat(postDTOList.get(0).getPostTime()).isEqualTo(now);
+        assertThat(postDTOList.get(1).getPostTime()).isEqualTo(now);
+
+    }
 
     //미디어 결합 완료
     //25/08/05-Post에 user 연결하는 로직 테스트 완료
@@ -146,48 +149,49 @@ public class ServiceTest {
     }
 
     //미디어 결합 완료
-//    @DisplayName("게시글을 성공적으로 수정한다.")
-//    @Test
-//    void updatePostSucessfully(){
-//        //given-리퍼지토리 기본 데이터 설정
-//        // 1. 기존 데이터 (DB에 이미 저장되어 있다고 가정)
-//        Long postId = 1L;
-//        Post existingPost = new Post(1L, "원래 제목", "원래 내용", LocalDateTime.now());
-//        Post savedPost = new Post(1L, "수정된 제목", "수정된 내용", LocalDateTime.now());
-//        Media existingMedia1 = new Media(1L, "image/jpeg", sampleJpgBytes, existingPost);
-//        Media existingMedia2 = new Media(2L, "image/png", samplePngBytes, existingPost);
-//        List<Media> existingMediaList = Arrays.asList(existingMedia1, existingMedia2);
-//        List<Media> savedMediaList = Arrays.asList(
-//                new Media(2L, "image/jpeg", sampleJpgBytes,savedPost),
-//                new Media(3L, "image/gif",samplePngBytes,savedPost)
-//        );
-//
-//        Long deleteList[] = new Long[]{1L};
-//
-//        //2. findById가 호출되면 기존 post,meida 반환하도록 설정
-//        when(mockPostRepository.findByIdOrElseThrow(postId)).thenReturn(existingPost);
-//        when(mockMediaRepository.findAllByPostPostId(postId)).thenReturn(existingMediaList);
-//        when(mockPostRepository.save(any(Post.class))).thenReturn(existingPost);
-//        when(mockMediaRepository.saveAll(anyList())).thenReturn(savedMediaList);
-//
-//        //when-수정을 위한 데이터
-//        PostDTO inputPostDTO = new PostDTO(null, "수정된 제목", "수정된 내용", null);
-//        MediaDTO inputMediaDTO2 = new MediaDTO(2L, "image/jpeg", sampleJpgBytes);
-//        MediaDTO inputMediaDTO3 = new MediaDTO(null, "image/gif",samplePngBytes);
-//        List<MediaDTO> inputMediaDTOList = Arrays.asList(inputMediaDTO2, inputMediaDTO3);
-//        PostAndMediaDTO inputPostAndDTOList = new PostAndMediaDTO(inputPostDTO,inputMediaDTOList);
-//        // 실제 서비스 메서드 호출
-//        PostAndMediaDTO updatedResult = mockService.updatePost(postId, inputPostAndDTOList);
-//
-//        // then: 결과 검증
-//        assertThat(updatedResult.getPostDTO().getPostTitle()).isEqualTo("수정된 제목");
-//        assertThat(updatedResult.getMediaDTOList().size()).isEqualTo(2);
-//        assertThat(updatedResult.getMediaDTOList()).extracting(MediaDTO::getMediaId)
-//                .containsExactlyInAnyOrder(2L, 3L);
-//
-//        // verify: Mock 객체의 메서드 호출 확인
-//        verify(mockMediaRepository, times(1)).deleteAllById(List.of(deleteList));
-//    }
+    @DisplayName("게시글을 성공적으로 수정한다.")
+    @Test
+    void updatePostSucessfully() throws AccessDeniedException {
+        //given-리퍼지토리 기본 데이터 설정
+        // 1. 기존 데이터 (DB에 이미 저장되어 있다고 가정)
+        Long postId = 1L;
+        User user = new User(1L, "유저1", "encodedPassword", now.minusHours(1));
+        Post existingPost = new Post(1L, "원래 제목", "원래 내용", LocalDateTime.now(),user);
+        Post savedPost = new Post(1L, "수정된 제목", "수정된 내용", LocalDateTime.now(),user);
+        Media existingMedia1 = new Media(1L, "image/jpeg", sampleJpgBytes, existingPost);
+        Media existingMedia2 = new Media(2L, "image/png", samplePngBytes, existingPost);
+        List<Media> existingMediaList = Arrays.asList(existingMedia1, existingMedia2);
+        List<Media> savedMediaList = Arrays.asList(
+                new Media(2L, "image/jpeg", sampleJpgBytes,savedPost),
+                new Media(3L, "image/gif",samplePngBytes,savedPost)
+        );
+
+        Long deleteList[] = new Long[]{1L};
+
+        //2. findById가 호출되면 기존 post,meida 반환하도록 설정
+        when(mockPostRepository.findByIdOrElseThrow(postId)).thenReturn(existingPost);
+        when(mockMediaRepository.findAllByPostPostId(postId)).thenReturn(existingMediaList);
+        when(mockPostRepository.save(any(Post.class))).thenReturn(existingPost);
+        when(mockMediaRepository.saveAll(anyList())).thenReturn(savedMediaList);
+
+        //when-수정을 위한 데이터
+        PostDTO inputPostDTO = new PostDTO(null, "수정된 제목", "수정된 내용", null);
+        MediaDTO inputMediaDTO2 = new MediaDTO(2L, "image/jpeg", sampleJpgBytes);
+        MediaDTO inputMediaDTO3 = new MediaDTO(null, "image/gif",samplePngBytes);
+        List<MediaDTO> inputMediaDTOList = Arrays.asList(inputMediaDTO2, inputMediaDTO3);
+        PostAndMediaDTO inputPostAndDTOList = new PostAndMediaDTO(inputPostDTO,inputMediaDTOList);
+        // 실제 서비스 메서드 호출
+        PostAndMediaDTO updatedResult = mockService.updatePost(postId, inputPostAndDTOList);
+
+        // then: 결과 검증
+        assertThat(updatedResult.getPostDTO().getPostTitle()).isEqualTo("수정된 제목");
+        assertThat(updatedResult.getMediaDTOList().size()).isEqualTo(2);
+        assertThat(updatedResult.getMediaDTOList()).extracting(MediaDTO::getMediaId)
+                .containsExactlyInAnyOrder(2L, 3L);
+
+        // verify: Mock 객체의 메서드 호출 확인
+        verify(mockMediaRepository, times(1)).deleteAllById(List.of(deleteList));
+    }
 
     //미디어 결합 완료
     //comment 결합 완료
@@ -211,62 +215,63 @@ public class ServiceTest {
     
     //미디어 결합 완료
     //comment 결합 완료
-//    @DisplayName("게시글을 성공적으로 조회한다")
-//    @Test
-//    void showPost(){
-//        //given-받아올 값: userId,리턴할 값: post dto,리파지토리 리턴값:postentity
-//        Long postId = 1L;
-//        Post post = new Post(1L,"제목1","내용1",now);
-//
-//        //given-mdeia 추가-받아 올 값: 없음(postId로 해당 mediaId조회 가능),리턴에 추가할 값: mediaDTOList,리파지토리 리턴 값: mediaEntity
-//        //리퍼지토리 리턴값
-//        Media jpegImage = new Media(1L, "image/jpeg",sampleJpgBytes,post);
-//        Media pngImage = new Media(2L,"image/png",samplePngBytes,post);
-//
-//        //리턴에 추가할 값
-//        List<MediaDTO> mediaDTOList = Arrays.asList(jpegImage.toDTO(),pngImage.toDTO());
-//
-//        //showPost()에서 최종 리턴 할 값
-//        PostAndMediaDTO postAndMediasDTO = new PostAndMediaDTO(post.toDTO(),mediaDTOList);
-//
-//        //comment 추가
-//        //given-받아올 값:없음,리파지토리 리턴 값: commentEntityList,service.showPost리턴값: PostAndMediaAndCommentDTO
-//        User user1 = new User(1L,"유저1","encodedPassword",now);
-//        User user2 = new User(2L,"유저2","encodedPassword",now);
-//        List<Comment> existingCommentEntityList = Arrays.asList(
-//                new Comment(1L,"댓글1",now,post,user1),
-//                new Comment(2L,"댓글2",now.plusHours(1),post,user1),
-//                new Comment(3L,"댓글3",now.plusHours(2),post,user2)
-//        );
-//
-//        List<CommentDTO> existingCommentDTOList = existingCommentEntityList.stream()
-//                .map(Comment::toDTO).toList();
-//        PostAndMediaAndCommentDTO postAndMediaAndCommentDTO = new PostAndMediaAndCommentDTO(post.toDTO(),mediaDTOList,existingCommentDTOList);
-//
-//        //----------------------------------------------------------------------------------------------------------
-//        //when-리파지토리 find/return entity real real:service(userId)
-//        when(mockPostRepository.findByIdOrElseThrow(anyLong())).thenReturn(post);
-//        //when media관련 추가-리파지토리에서 findxxx로 찾고 리턴값은 엔티티이다. 실제: 변하지 않음
-//        when(mockMediaRepository.findAllByPostPostId(anyLong())).thenReturn(Arrays.asList(jpegImage,pngImage));
-//        //when-테스트할 메소드: repositoty.findAllByPostPostId->commentEntityList/실제 service.showPost()->PostAndMediaAndCommentDTO
-//        when(mockCommentRepository.findAllByPostPostId(postId)).thenReturn(existingCommentEntityList);
-//        PostAndMediaAndCommentDTO result = mockService.showPost(postId);
-//
-//        //then-비교-post
-//        assertThat(result.getPostDTO().getPostContent()).isEqualTo("내용1");
-//        assertThat(result.getPostDTO().getPostTitle()).isEqualTo("제목1");
-//
-//        //비교-media
-//        assertThat(result.getMediaDTOList().get(0).getMediaType()).isEqualTo("image/jpeg");
-//        assertThat(result.getMediaDTOList().get(0).getMediaContent()).isEqualTo(sampleJpgBytes);
-//        assertThat(result.getMediaDTOList().size()).isEqualTo(2);
-//
-//        verify(mockPostRepository).findByIdOrElseThrow(postId);
-//        verify(mockMediaRepository).findAllByPostPostId(postId);
-//
-//        //then-확인할 값:comment userId,contnet,commentTime/findAllByPostPostId한번만 실행되는거 확인
-//
-//    }
+    @DisplayName("게시글을 성공적으로 조회한다")
+    @Test
+    void showPost(){
+        //given-받아올 값: userId,리턴할 값: post dto,리파지토리 리턴값:postentity
+        Long postId = 1L;
+        User user = new User(1L, "유저1", "encodedPassword", now.minusHours(1));
+        Post post = new Post(1L,"제목1","내용1",now,user);
+
+        //given-mdeia 추가-받아 올 값: 없음(postId로 해당 mediaId조회 가능),리턴에 추가할 값: mediaDTOList,리파지토리 리턴 값: mediaEntity
+        //리퍼지토리 리턴값
+        Media jpegImage = new Media(1L, "image/jpeg",sampleJpgBytes,post);
+        Media pngImage = new Media(2L,"image/png",samplePngBytes,post);
+
+        //리턴에 추가할 값
+        List<MediaDTO> mediaDTOList = Arrays.asList(jpegImage.toDTO(),pngImage.toDTO());
+
+        //showPost()에서 최종 리턴 할 값
+        PostAndMediaDTO postAndMediasDTO = new PostAndMediaDTO(post.toDTO(),mediaDTOList);
+
+        //comment 추가
+        //given-받아올 값:없음,리파지토리 리턴 값: commentEntityList,service.showPost리턴값: PostAndMediaAndCommentDTO
+        User user1 = new User(1L,"유저1","encodedPassword",now);
+        User user2 = new User(2L,"유저2","encodedPassword",now);
+        List<Comment> existingCommentEntityList = Arrays.asList(
+                new Comment(1L,"댓글1",now,post,user1),
+                new Comment(2L,"댓글2",now.plusHours(1),post,user1),
+                new Comment(3L,"댓글3",now.plusHours(2),post,user2)
+        );
+
+        List<CommentDTO> existingCommentDTOList = existingCommentEntityList.stream()
+                .map(Comment::toDTO).toList();
+        PostAndMediaAndCommentDTO postAndMediaAndCommentDTO = new PostAndMediaAndCommentDTO(post.toDTO(),mediaDTOList,existingCommentDTOList);
+
+        //----------------------------------------------------------------------------------------------------------
+        //when-리파지토리 find/return entity real real:service(userId)
+        when(mockPostRepository.findByIdOrElseThrow(anyLong())).thenReturn(post);
+        //when media관련 추가-리파지토리에서 findxxx로 찾고 리턴값은 엔티티이다. 실제: 변하지 않음
+        when(mockMediaRepository.findAllByPostPostId(anyLong())).thenReturn(Arrays.asList(jpegImage,pngImage));
+        //when-테스트할 메소드: repositoty.findAllByPostPostId->commentEntityList/실제 service.showPost()->PostAndMediaAndCommentDTO
+        when(mockCommentRepository.findAllByPostPostId(postId)).thenReturn(existingCommentEntityList);
+        PostAndMediaAndCommentDTO result = mockService.showPost(postId);
+
+        //then-비교-post
+        assertThat(result.getPostDTO().getPostContent()).isEqualTo("내용1");
+        assertThat(result.getPostDTO().getPostTitle()).isEqualTo("제목1");
+
+        //비교-media
+        assertThat(result.getMediaDTOList().get(0).getMediaType()).isEqualTo("image/jpeg");
+        assertThat(result.getMediaDTOList().get(0).getMediaContent()).isEqualTo(sampleJpgBytes);
+        assertThat(result.getMediaDTOList().size()).isEqualTo(2);
+
+        verify(mockPostRepository).findByIdOrElseThrow(postId);
+        verify(mockMediaRepository).findAllByPostPostId(postId);
+
+        //then-확인할 값:comment userId,contnet,commentTime/findAllByPostPostId한번만 실행되는거 확인
+
+    }
 
     //댓글 생성
     //25/08/05-유저 정보 받아와서 저장하는 로직 추가
@@ -303,15 +308,16 @@ public class ServiceTest {
 
     @DisplayName("댓글을 성공적으로 수정한다.")
     @Test
-    void updateCommentSucessfully(){
+    void updateCommentSucessfully() throws AccessDeniedException{
         //before-수정전 값: commentEntity
-        Comment existingCommnetEntity = new Comment(1L,"댓글",now.minusHours(1),new Post(),new User());
+        User user = new User(1L, "유저1", "encodedPassword", now.minusHours(1));
+        Comment existingCommnetEntity = new Comment(1L,"댓글",now.minusHours(1),new Post(),user);
         when(mockCommentRepository.findByIdOrElseThrow(anyLong())).thenReturn(existingCommnetEntity);
 
         //given-받아올 값: commentdto,commnetId/원래 저장되어있던 값:commentEntity/when(repository)의 반환값: commententity/최종적으로 반환할 값: commentdto
         Long commentId = 1L;
         CommentDTO updateCommentRequestDTO = new CommentDTO(null,"댓글수정",now);
-        Comment expectedCommentEntity = new Comment(1L,"댓글수정",now,new Post(),new User());
+        Comment expectedCommentEntity = new Comment(1L,"댓글수정",now,new Post(),user);
         CommentDTO expectedCommentDTO = new CommentDTO(1L,"댓글수정",now);
 
         //when-repository에 저장후 반환값:comment
