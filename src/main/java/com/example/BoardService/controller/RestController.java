@@ -118,4 +118,14 @@ public class RestController {
         log.info("/api/login POST Request:Controller logic sucess");
         return ResponseEntity.status(HttpStatus.OK).body(isLoginSucessful);
     }
+
+    //글,댓글 찾기
+    @GetMapping("/search/{keyword}")
+    public ResponseEntity<List<PostDTO>> searchPostAndComment(@PathVariable String keyword){
+        log.info("/api/search/{keyword} GET Request:search someting");
+        List<PostDTO> responsePostDTOList = service.searchPostAndComment(keyword);
+
+        log.info("/api/search/{keyword} GET Request:Controller logic sucess");
+        return ResponseEntity.status(HttpStatus.OK).body(responsePostDTOList);
+    }
 }

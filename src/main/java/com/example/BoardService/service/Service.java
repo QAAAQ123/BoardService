@@ -18,9 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @org.springframework.stereotype.Service
@@ -220,6 +218,32 @@ public class Service {
         return bCryptPasswordEncoder.matches(loginUserRequestEntity.getPassword(),existingUserEntity.getPassword());
     }
     //유저
+
+    //검색 기능-25/08/06 추가
+    public List<PostDTO> searchPostAndComment(String keyword) {
+        /* 1. postRepo에서 keyword포함되어 있는 모든 PostId들을 가져온다.
+        2. commentRepo에 keyword포함되어 있는 모든 postId들을 가져온다.
+        3. 1과 2에서 가져온 postId리스트를 병합한다.
+        4. 병합한 아이디로 postEntityList를 가져온다.
+        5. 엔티티들을 DTO로 바꿔서 리턴
+        */
+        //1. postRepo에서 keyword포함되어 있는 모든 PostId들을 가져온다.
+        List<Long> keywordIncludingPostIdListFromPost = postRepository.searchAllPostIdByKeywordAtPost(keyword);
+        //2.commentRepo에 keyword포함되어 있는 모든 postId들을 가져온다.
+        List<Long> keywordIncludingPostIdListFromComment = commentRepository.searchAllPostIdByKeywordAtComment(keyword);
+        //3. 1과 2에서 가져온 postId리스트를 병합한다.
+        Set<Long> postIdSet = new HashSet<>();
+        postIdSet.addAll(keywordIncludingPostIdListFromPost);
+        postIdSet.addAll(keywordIncludingPostIdListFromComment);
+        //4.병합한 아이디로 postEntityList를 가져온다.
+        List<Post> keywordIncludingPostEntityList = postRepository.findAllByIdList(postIdSet);
+
+        //5. DTO로 바꿔서 return
+        return keywordIncludingPostEntityList.stream()
+                .map(Post::toDTO)
+                .collect(Collectors.toList());
+
+    }
     //----------------------------------------------------------------------------------------------------------------
     //내부 메소드
     private Post mergePostEntity(Post targetPostEntity, Post inputPostEntity) {
@@ -311,6 +335,7 @@ public class Service {
         }
         return existingCommentEntity;
     }
+
 
 }
 

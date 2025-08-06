@@ -15,7 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -305,6 +304,31 @@ public class RestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
 
+
+    }
+
+    @DisplayName("POST /search 요청시 성공적으로 keyword가 포함된 글이나 댓글을 확인해 글 목록을 반환한다.")
+    @Test
+    @WithMockUser(username = "testuser",roles="USER")
+    void searchPostAndCommentEndpointSucessfully() throws Exception {
+        //given-들어올 값: keyword/서비스에 들어갈 값:keyword/컨트롤러에서 최종적으로 반환할 값:List<PostDTO>
+        String keyword = "수정함";
+        List<PostDTO> expectedPostDTOList = Arrays.asList(
+                new PostDTO(1L, "제목1", "수정함", now),
+                new PostDTO(2L, "제목2", "내용2", now), //댓글에 "수정함"이 있다고 가정
+                new PostDTO(4L, "수정함", "내용4", now)
+        );
+
+        when(mockService.searchPostAndComment(anyString())).thenReturn(expectedPostDTOList);
+
+        mockMvc.perform(get("/api/search/{keyword}",keyword)
+                .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$[?(@.postId == 1)].postTitle").value("제목1"))
+                .andExpect(jsonPath("$[?(@.postId == 2)].postTitle").value("제목2"))
+                .andExpect(jsonPath("$[?(@.postId == 4)].postTitle").value("수정함"));
 
     }
 }

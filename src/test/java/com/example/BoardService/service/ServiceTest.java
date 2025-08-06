@@ -3,7 +3,6 @@ package com.example.BoardService.service;
 import com.example.BoardService.dto.*;
 import com.example.BoardService.entity.*;
 import com.example.BoardService.repository.*;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,7 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -21,9 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -53,13 +49,13 @@ public class ServiceTest {
     private byte[] samplePngBytes;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         MockitoAnnotations.openMocks(this);
-        sampleJpgBytes = new byte[]{(byte)0xFF, (byte)0xD8, (byte)0xFF, (byte)0xE0, 0x00, 0x10, 0x4A, 0x46};
-        samplePngBytes = new byte[]{(byte)0x89, (byte)0x50, (byte)0x4E, (byte)0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+        sampleJpgBytes = new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0x00, 0x10, 0x4A, 0x46};
+        samplePngBytes = new byte[]{(byte) 0x89, (byte) 0x50, (byte) 0x4E, (byte) 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
 
         //sercurity 부분 AI 작성한 코드 Ctrl+V
-        Authentication auth = new UsernamePasswordAuthenticationToken("유저1",null);
+        Authentication auth = new UsernamePasswordAuthenticationToken("유저1", null);
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(auth);
         SecurityContextHolder.setContext(securityContext);
@@ -69,13 +65,13 @@ public class ServiceTest {
 
     @DisplayName("모든 게시글 목록을 성공적으로 조회한다.")
     @Test
-    //25/08/06-User 추가
-    void showAllPostSucessfully(){
+        //25/08/06-User 추가
+    void showAllPostSucessfully() {
         //준비: postrepository가 반환할 가짜 post 엔티티 목록 설정
         User user = new User(1L, "유저1", "encodedPassword", now.minusHours(1));
         List<Post> list = Arrays.asList(
-                new Post(null,"제목1","내용1",now,user),
-                new Post(null ,"제목2","내용2",now,user)
+                new Post(1L, "제목1", "내용1", now, user),
+                new Post(2L, "제목2", "내용2", now, user)
         );
 
         List<Post> mockPosts = new ArrayList<>(list);
@@ -101,33 +97,33 @@ public class ServiceTest {
     //25/08/05-Post에 user 연결하는 로직 테스트 완료
     @DisplayName("게시글을 성공적으로 생성한다.")
     @Test
-    void createPostSucessfully(){
+    void createPostSucessfully() {
         //given-1. 파라미터로 들어오는 값:저장할 데이터 DTO(post,mediaList)
-        PostDTO postDTO = new PostDTO(null,"제목1","내용1",null);
-        MediaDTO mediaDTO1 = new MediaDTO(null,"image/jpeg",sampleJpgBytes);
-        MediaDTO mediaDTO2 = new MediaDTO(null,"image/png",samplePngBytes);
-        List<MediaDTO> mediaDTOList = Arrays.asList(mediaDTO1,mediaDTO2);
+        PostDTO postDTO = new PostDTO(null, "제목1", "내용1", null);
+        MediaDTO mediaDTO1 = new MediaDTO(null, "image/jpeg", sampleJpgBytes);
+        MediaDTO mediaDTO2 = new MediaDTO(null, "image/png", samplePngBytes);
+        List<MediaDTO> mediaDTOList = Arrays.asList(mediaDTO1, mediaDTO2);
 
         //2. 이미 저장되어있던 User엔티티
         User user = new User(1L, "유저1", "encodedPassword", now.minusHours(1));
 
         //3. 리파지터리에서 반환 할 값: input dto를 저장한 엔티티
-        Post savedPost  = new Post(1L,"제목1","내용1",now,user);
-        Media savedMeida1 = new Media(1L,"image/jpeg",sampleJpgBytes,savedPost);
-        Media savedMedia2 = new Media(2L,"image/png",samplePngBytes,savedPost);
+        Post savedPost = new Post(1L, "제목1", "내용1", now, user);
+        Media savedMeida1 = new Media(1L, "image/jpeg", sampleJpgBytes, savedPost);
+        Media savedMedia2 = new Media(2L, "image/png", samplePngBytes, savedPost);
 
         //4. 최종적으로 반환할 값: dto(post,mediaList)
-        PostAndMediaDTO postAndMediasDTO = new PostAndMediaDTO(savedPost.toDTO(),Arrays.asList(savedMeida1.toDTO(),savedMedia2.toDTO()));
+        PostAndMediaDTO postAndMediasDTO = new PostAndMediaDTO(savedPost.toDTO(), Arrays.asList(savedMeida1.toDTO(), savedMedia2.toDTO()));
 
         //when-1. postrepository에 저장->savedPost리턴
         when(mockPostRepository.save(any(Post.class))).thenReturn(savedPost);
         //2. mediaReposioty에 저장->savedMediaList 리턴
-        when(mockMediaRepository.saveAll(anyList())).thenReturn(Arrays.asList(savedMeida1,savedMedia2));
+        when(mockMediaRepository.saveAll(anyList())).thenReturn(Arrays.asList(savedMeida1, savedMedia2));
         //3. 원래 저장되어있던 유저 정보
         when(mockUserRepository.findByUsername(anyString())).thenReturn(user);
 
         //act-주입한 service 계층의 메소드 직접 사용 및 리턴 값 저장
-        PostAndMediaDTO resultDTO = mockService.createPost(postDTO,mediaDTOList);
+        PostAndMediaDTO resultDTO = mockService.createPost(postDTO, mediaDTOList);
 
         //given-실제와 test 케이스가 맞는지 확인
         assertThat(resultDTO.getPostDTO().getPostId()).isEqualTo(1L);
@@ -156,14 +152,14 @@ public class ServiceTest {
         // 1. 기존 데이터 (DB에 이미 저장되어 있다고 가정)
         Long postId = 1L;
         User user = new User(1L, "유저1", "encodedPassword", now.minusHours(1));
-        Post existingPost = new Post(1L, "원래 제목", "원래 내용", LocalDateTime.now(),user);
-        Post savedPost = new Post(1L, "수정된 제목", "수정된 내용", LocalDateTime.now(),user);
+        Post existingPost = new Post(1L, "원래 제목", "원래 내용", LocalDateTime.now(), user);
+        Post savedPost = new Post(1L, "수정된 제목", "수정된 내용", LocalDateTime.now(), user);
         Media existingMedia1 = new Media(1L, "image/jpeg", sampleJpgBytes, existingPost);
         Media existingMedia2 = new Media(2L, "image/png", samplePngBytes, existingPost);
         List<Media> existingMediaList = Arrays.asList(existingMedia1, existingMedia2);
         List<Media> savedMediaList = Arrays.asList(
-                new Media(2L, "image/jpeg", sampleJpgBytes,savedPost),
-                new Media(3L, "image/gif",samplePngBytes,savedPost)
+                new Media(2L, "image/jpeg", sampleJpgBytes, savedPost),
+                new Media(3L, "image/gif", samplePngBytes, savedPost)
         );
 
         Long deleteList[] = new Long[]{1L};
@@ -177,9 +173,9 @@ public class ServiceTest {
         //when-수정을 위한 데이터
         PostDTO inputPostDTO = new PostDTO(null, "수정된 제목", "수정된 내용", null);
         MediaDTO inputMediaDTO2 = new MediaDTO(2L, "image/jpeg", sampleJpgBytes);
-        MediaDTO inputMediaDTO3 = new MediaDTO(null, "image/gif",samplePngBytes);
+        MediaDTO inputMediaDTO3 = new MediaDTO(null, "image/gif", samplePngBytes);
         List<MediaDTO> inputMediaDTOList = Arrays.asList(inputMediaDTO2, inputMediaDTO3);
-        PostAndMediaDTO inputPostAndDTOList = new PostAndMediaDTO(inputPostDTO,inputMediaDTOList);
+        PostAndMediaDTO inputPostAndDTOList = new PostAndMediaDTO(inputPostDTO, inputMediaDTOList);
         // 실제 서비스 메서드 호출
         PostAndMediaDTO updatedResult = mockService.updatePost(postId, inputPostAndDTOList);
 
@@ -197,7 +193,7 @@ public class ServiceTest {
     //comment 결합 완료
     @DisplayName("게시글을 성공적으로 삭제한다.")
     @Test
-    void deletePostSucessfully(){
+    void deletePostSucessfully() {
         //given-postId
         Long postId = 1L;
 
@@ -212,47 +208,47 @@ public class ServiceTest {
         verify(mockMediaRepository).deleteAllByPostPostId(postId);
         verify(mockCommentRepository).deleteAllByPostPostId(postId);
     }
-    
+
     //미디어 결합 완료
     //comment 결합 완료
     @DisplayName("게시글을 성공적으로 조회한다")
     @Test
-    void showPost(){
+    void showPost() {
         //given-받아올 값: userId,리턴할 값: post dto,리파지토리 리턴값:postentity
         Long postId = 1L;
         User user = new User(1L, "유저1", "encodedPassword", now.minusHours(1));
-        Post post = new Post(1L,"제목1","내용1",now,user);
+        Post post = new Post(1L, "제목1", "내용1", now, user);
 
         //given-mdeia 추가-받아 올 값: 없음(postId로 해당 mediaId조회 가능),리턴에 추가할 값: mediaDTOList,리파지토리 리턴 값: mediaEntity
         //리퍼지토리 리턴값
-        Media jpegImage = new Media(1L, "image/jpeg",sampleJpgBytes,post);
-        Media pngImage = new Media(2L,"image/png",samplePngBytes,post);
+        Media jpegImage = new Media(1L, "image/jpeg", sampleJpgBytes, post);
+        Media pngImage = new Media(2L, "image/png", samplePngBytes, post);
 
         //리턴에 추가할 값
-        List<MediaDTO> mediaDTOList = Arrays.asList(jpegImage.toDTO(),pngImage.toDTO());
+        List<MediaDTO> mediaDTOList = Arrays.asList(jpegImage.toDTO(), pngImage.toDTO());
 
         //showPost()에서 최종 리턴 할 값
-        PostAndMediaDTO postAndMediasDTO = new PostAndMediaDTO(post.toDTO(),mediaDTOList);
+        PostAndMediaDTO postAndMediasDTO = new PostAndMediaDTO(post.toDTO(), mediaDTOList);
 
         //comment 추가
         //given-받아올 값:없음,리파지토리 리턴 값: commentEntityList,service.showPost리턴값: PostAndMediaAndCommentDTO
-        User user1 = new User(1L,"유저1","encodedPassword",now);
-        User user2 = new User(2L,"유저2","encodedPassword",now);
+        User user1 = new User(1L, "유저1", "encodedPassword", now);
+        User user2 = new User(2L, "유저2", "encodedPassword", now);
         List<Comment> existingCommentEntityList = Arrays.asList(
-                new Comment(1L,"댓글1",now,post,user1),
-                new Comment(2L,"댓글2",now.plusHours(1),post,user1),
-                new Comment(3L,"댓글3",now.plusHours(2),post,user2)
+                new Comment(1L, "댓글1", now, post, user1),
+                new Comment(2L, "댓글2", now.plusHours(1), post, user1),
+                new Comment(3L, "댓글3", now.plusHours(2), post, user2)
         );
 
         List<CommentDTO> existingCommentDTOList = existingCommentEntityList.stream()
                 .map(Comment::toDTO).toList();
-        PostAndMediaAndCommentDTO postAndMediaAndCommentDTO = new PostAndMediaAndCommentDTO(post.toDTO(),mediaDTOList,existingCommentDTOList);
+        PostAndMediaAndCommentDTO postAndMediaAndCommentDTO = new PostAndMediaAndCommentDTO(post.toDTO(), mediaDTOList, existingCommentDTOList);
 
         //----------------------------------------------------------------------------------------------------------
         //when-리파지토리 find/return entity real real:service(userId)
         when(mockPostRepository.findByIdOrElseThrow(anyLong())).thenReturn(post);
         //when media관련 추가-리파지토리에서 findxxx로 찾고 리턴값은 엔티티이다. 실제: 변하지 않음
-        when(mockMediaRepository.findAllByPostPostId(anyLong())).thenReturn(Arrays.asList(jpegImage,pngImage));
+        when(mockMediaRepository.findAllByPostPostId(anyLong())).thenReturn(Arrays.asList(jpegImage, pngImage));
         //when-테스트할 메소드: repositoty.findAllByPostPostId->commentEntityList/실제 service.showPost()->PostAndMediaAndCommentDTO
         when(mockCommentRepository.findAllByPostPostId(postId)).thenReturn(existingCommentEntityList);
         PostAndMediaAndCommentDTO result = mockService.showPost(postId);
@@ -277,14 +273,14 @@ public class ServiceTest {
     //25/08/05-유저 정보 받아와서 저장하는 로직 추가
     @DisplayName("댓글을 성공적으로 생성한다.")
     @Test
-    void createCommentSucessfully(){
+    void createCommentSucessfully() {
         //given-1.받아올값: postId,CommentDTO/when(repository)의 반환값:commentEntity/최종 리턴 값: commentDTO/user 정보security에서 받아옴
         Long postId = 1L;
         User user = new User(1L, "유저1", "encodedPassword", now.minusHours(1));
-        Post post = new Post(1L,"제목1","내용1",now.minusHours(1),user);
-        CommentDTO inputCommentDTO = new CommentDTO(null,"댓글1",null);
-        Comment createdCommentEntity = new Comment(1L,"댓글1",now,post,user);
-        CommentDTO createdCommentDTO = new CommentDTO(1L,"댓글1",now);
+        Post post = new Post(1L, "제목1", "내용1", now.minusHours(1), user);
+        CommentDTO inputCommentDTO = new CommentDTO(null, "댓글1", null);
+        Comment createdCommentEntity = new Comment(1L, "댓글1", now, post, user);
+        CommentDTO createdCommentDTO = new CommentDTO(1L, "댓글1", now);
 
         //when-repository에 넣고 entity반환
         when(mockUserRepository.findByUsername(anyString())).thenReturn(user);
@@ -292,7 +288,7 @@ public class ServiceTest {
         when(mockCommentRepository.save(any(Comment.class))).thenReturn(createdCommentEntity);
 
         //act-service.createCommnet에 넣은 결과
-        CommentDTO result = mockService.createComment(postId,inputCommentDTO);
+        CommentDTO result = mockService.createComment(postId, inputCommentDTO);
 
         //then-assertThat:댓글id,내용,시간 비교/verify:save가 한번 사용되었는지,postRe에서 post가 한번 꺼내 졌는지 확인
         assertThat(result).isNotNull();
@@ -308,23 +304,23 @@ public class ServiceTest {
 
     @DisplayName("댓글을 성공적으로 수정한다.")
     @Test
-    void updateCommentSucessfully() throws AccessDeniedException{
+    void updateCommentSucessfully() throws AccessDeniedException {
         //before-수정전 값: commentEntity
         User user = new User(1L, "유저1", "encodedPassword", now.minusHours(1));
-        Comment existingCommnetEntity = new Comment(1L,"댓글",now.minusHours(1),new Post(),user);
+        Comment existingCommnetEntity = new Comment(1L, "댓글", now.minusHours(1), new Post(), user);
         when(mockCommentRepository.findByIdOrElseThrow(anyLong())).thenReturn(existingCommnetEntity);
 
         //given-받아올 값: commentdto,commnetId/원래 저장되어있던 값:commentEntity/when(repository)의 반환값: commententity/최종적으로 반환할 값: commentdto
         Long commentId = 1L;
-        CommentDTO updateCommentRequestDTO = new CommentDTO(null,"댓글수정",now);
-        Comment expectedCommentEntity = new Comment(1L,"댓글수정",now,new Post(),user);
-        CommentDTO expectedCommentDTO = new CommentDTO(1L,"댓글수정",now);
+        CommentDTO updateCommentRequestDTO = new CommentDTO(null, "댓글수정", now);
+        Comment expectedCommentEntity = new Comment(1L, "댓글수정", now, new Post(), user);
+        CommentDTO expectedCommentDTO = new CommentDTO(1L, "댓글수정", now);
 
         //when-repository에 저장후 반환값:comment
         when(mockCommentRepository.save(any(Comment.class))).thenReturn(expectedCommentEntity);
-        
+
         //act-실제 서비스 
-        CommentDTO result = mockService.updateComment(commentId,updateCommentRequestDTO);
+        CommentDTO result = mockService.updateComment(commentId, updateCommentRequestDTO);
 
         //then-assertThat:댓글id,내용,시간 비교/verify:save가 한번 사용되었는지,commentRe에서  findbyid가 1번 사용되었는지
         assertThat(result).isNotNull();
@@ -332,17 +328,17 @@ public class ServiceTest {
         assertThat(result.getCommentContent()).isEqualTo("댓글수정");
         assertThat(result.getCommentTime()).isNotNull();
 
-        verify(mockCommentRepository,times(1)).findByIdOrElseThrow(anyLong());
-        verify(mockCommentRepository,times(1)).save(any(Comment.class));
+        verify(mockCommentRepository, times(1)).findByIdOrElseThrow(anyLong());
+        verify(mockCommentRepository, times(1)).save(any(Comment.class));
     }
 
     //25/08/04-password encoder 테스트 추가
     @DisplayName("유저정보를 성공적으로 저장한다.")
     @Test
-    void saveUserSucessfully(){
+    void saveUserSucessfully() {
         //given-받아올 값: userDTO/repository의 반환 값: userEntity/서비스 메소드의 최종 반환 값: void
-        UserDTO saveUserRequestDTO = new UserDTO(null,"userName","userPassword",null);
-        User savedUserEntity = new User(1L,"userName","userPassword",now);
+        UserDTO saveUserRequestDTO = new UserDTO(null, "userName", "userPassword", null);
+        User savedUserEntity = new User(1L, "userName", "userPassword", now);
 
         //when-repository에 저장할 값과 반환값
         when(mockUserRepository.save(any(User.class))).thenReturn(savedUserEntity);
@@ -351,14 +347,14 @@ public class ServiceTest {
         //act-service는 void를 반환
         mockService.joinUser(saveUserRequestDTO);
 
-        verify(mockUserRepository,times(1)).save(any(User.class));
-        verify(encoder,times(1)).encode(any(CharSequence.class));
+        verify(mockUserRepository, times(1)).save(any(User.class));
+        verify(encoder, times(1)).encode(any(CharSequence.class));
     }
 
     //25/08/04-password encoder 테스트 추가
     @DisplayName("유저 로그인을 위한 유저 정보 확인을 성공적으로 수행한다.")
     @Test
-    void loginUserSucessfully(){
+    void loginUserSucessfully() {
         // given
         String rawPassword = "userPassword";
         String encodedPassword = "encodedPassword";
@@ -380,5 +376,47 @@ public class ServiceTest {
         assertThat(result).isTrue();
         verify(mockUserRepository, times(1)).findByUsername(anyString());
         verify(encoder, times(1)).matches(rawPassword, encodedPassword);
+    }
+
+    //25/08/06-find post and comment 테스트 추가
+    @DisplayName("글이나 댓글에 특정 키워드를 포함하고 있는 글 목록을 성공적으로 검색한다.")
+    @Test
+    void searchPostAndCommentSucessfully() {
+        //메인 화면에서 검색 창에 문자열을 입력하면 입력된 문자열과 일치하는 글 리스트만 모아서 보여준다.(showPosts와 비슷함)
+        //찾을 내용을 "수정함"이라고 가정
+        String searchDate = "수정함";
+        //given-1.이미 글과 댓글이 저장되어있다고 가정할때의 데이터
+        User user = new User(1L, "유저1", "encodedPassword", now.minusHours(1));
+        User user2 = new User(2L, "유저2", "encodedPassword", now.minusMinutes(30));
+        Post post1 = new Post(1L, "제목1", "수정함", now, user);
+        Post post2 = new Post(2L, "제목2", "내용2", now, user2);
+        Post post3 = new Post(3L, "제목3", "내용3", now, user);
+        Post post4 = new Post(4L, "수정함", "내용4", now, user2);
+        Comment commnet1 = new Comment(1L, "댓글1", now, post1, user2);
+        Comment comment2 = new Comment(2L, "수정함", now, post2, user2);
+        Comment comment3 = new Comment(3L, "댓글3", now, post1, user);
+
+        //2.리파지토리에서 반환할 데이터: PostIdListfrompost,PostIdListfromcomment,list<post>
+        List<Long> postIdListFromPost = Arrays.asList(1L,4L);
+        List<Long> postIdListFromCommnet = Arrays.asList(comment2.getPost().getPostId());
+        List<Post> expectedResultPosts = Arrays.asList(post1, post2, post4);
+
+
+        //when-postrepo에서 searchAllByKeywordAtPost사용 commentRepo에서 searchAllPostIdByKeywordAtComment사용
+        when(mockPostRepository.searchAllPostIdByKeywordAtPost(anyString())).thenReturn(postIdListFromPost);
+        when(mockCommentRepository.searchAllPostIdByKeywordAtComment(anyString())).thenReturn(postIdListFromCommnet);
+        when(mockPostRepository.findAllByIdList(anySet())).thenReturn(expectedResultPosts);
+
+        //act - 실제 서비스 메소드 반환 값: postDTOList
+        List<PostDTO> result = mockService.searchPostAndComment("수정함");
+
+        //then-결과 확인
+        assertThat(result).hasSize(3);
+        assertThat(result.get(0).getPostId()).isEqualTo(1L);
+        assertThat(result.get(1).getPostId()).isEqualTo(2L);
+        assertThat(result.get(2).getPostId()).isEqualTo(4L);
+
+        verify(mockPostRepository,times(1)).searchAllPostIdByKeywordAtPost(anyString());
+        verify(mockCommentRepository,times(1)).searchAllPostIdByKeywordAtComment(anyString());
     }
 }
