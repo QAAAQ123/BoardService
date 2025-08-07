@@ -61,6 +61,7 @@ public class Service {
         postEntity.setUser(userRepository.findByUsername(auth.getName()));
         postEntity.setPostTime(LocalDateTime.now());
 
+        log.info("[INFO] New 'Post' request: postTitle={}, postContent={}, userId={}",postEntity.getPostTitle(),postEntity.getPostContent(),postEntity.getUser().getUserId());
         //postrepository에 postEntity저장
         Post savedPostEntity = postRepository.save(postDTO.toEntity());
 
@@ -202,14 +203,19 @@ public class Service {
     public void joinUser(UserDTO saveRequestUserDTO) {
         User saveRequestUserEntity = saveRequestUserDTO.toEntity();
         saveRequestUserEntity.setUserTime(LocalDateTime.now());
+        log.info("[INFO] New user registered: userId={}, username={}, password={}, joinedAt={}",
+                saveRequestUserEntity.getUserId(),saveRequestUserEntity.getUsername(),saveRequestUserEntity.getPassword(),saveRequestUserEntity.getUserTime());
+
         saveRequestUserEntity.setPassword(
                 bCryptPasswordEncoder.encode(saveRequestUserEntity.getPassword()));
-        userRepository.save(saveRequestUserDTO.toEntity());
+        userRepository.save(saveRequestUserEntity);
     }
 
     //25/08/04-password 검증 로직 추가
     public Boolean loginUser(UserDTO loginUserRequestDTO) {
         User loginUserRequestEntity = loginUserRequestDTO.toEntity();
+        log.info("[INFO] User login request: username={}, password={}",
+                loginUserRequestEntity.getUsername(),loginUserRequestEntity.getPassword());
         User existingUserEntity = userRepository.findByUsername(loginUserRequestEntity.getUsername());
 
         if(existingUserEntity == null)

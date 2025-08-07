@@ -1,0 +1,84 @@
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>새 게시물 작성</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center min-h-screen p-4">
+<div class="w-full max-w-2xl bg-white p-8 rounded-lg shadow-lg">
+    <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">새 게시물 작성</h1>
+    <form id="createPostForm" class="space-y-4">
+        <div>
+            <label for="postTitle" class="sr-only">제목</label>
+            <input type="text" id="postTitle" name="postTitle" placeholder="제목" required
+                   class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out text-lg font-semibold">
+        </div>
+        <div>
+            <label for="postContent" class="sr-only">내용</label>
+            <textarea id="postContent" name="postContent" placeholder="내용" rows="10" required
+                      class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out resize-none"></textarea>
+        </div>
+        <button type="submit"
+                class="w-full bg-indigo-600 text-white py-3 rounded-md font-semibold text-lg hover:bg-indigo-700 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+            게시물 생성
+        </button>
+    </form>
+    <div id="messageBox" class="mt-4 p-3 text-sm text-center rounded-md hidden"></div>
+</div>
+
+<script>
+    document.getElementById('createPostForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const postTitle = document.getElementById('postTitle').value;
+        const postContent = document.getElementById('postContent').value;
+        const messageBox = document.getElementById('messageBox');
+        messageBox.textContent = '';
+        messageBox.classList.add('hidden');
+
+        const postData = {
+            postDTO: {
+                postTitle: postTitle,
+                postContent: postContent
+            },
+            mediaDTOList: [] // 미디어 파일은 현재 DTO에 포함되지 않으므로 빈 배열로 전달
+        };
+
+        try {
+            const response = await fetch('/api/posts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(postData)
+            });
+
+            if (response.ok) {
+                messageBox.textContent = '게시물이 성공적으로 생성되었습니다.';
+                messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-700');
+                messageBox.classList.add('bg-green-100', 'text-green-700');
+                // 게시물 생성 후 게시물 목록 페이지로 리디렉션
+                window.location.href = '/main';
+            } else {
+                const error = await response.json().catch(() => null);
+                messageBox.textContent = '게시물 생성 실패. 다시 시도해 주세요.';
+                messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700');
+                messageBox.classList.add('bg-red-100', 'text-red-700');
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            messageBox.textContent = '게시물 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700');
+            messageBox.classList.add('bg-red-100', 'text-red-700');
+        }
+    });
+</script>
+</body>
+</html>

@@ -37,6 +37,7 @@ public class RestController {
         log.info("/api/posts POST Request:Create Post");
         PostDTO inputPostDTO = inputPostAndMediaListDTO.getPostDTO();
         List<MediaDTO> inputMediaListDTO = inputPostAndMediaListDTO.getMediaDTOList();
+        log.info("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
         PostAndMediaDTO createdPostAndMediaDTO = service.createPost(inputPostDTO,inputMediaListDTO);
 
         log.info("/api/posts POST Request:Controller logic sucess");
@@ -114,9 +115,14 @@ public class RestController {
     public ResponseEntity<Boolean> loginUser(@RequestBody UserDTO loginUserReqeustDTO){
         log.info("/api/login POST Request:Login user");
         Boolean isLoginSucessful = service.loginUser(loginUserReqeustDTO);
-
-        log.info("/api/login POST Request:Controller logic sucess");
-        return ResponseEntity.status(HttpStatus.OK).body(isLoginSucessful);
+        if(isLoginSucessful) {
+            log.info("/api/login POST Request:Controller logic sucess");
+            return ResponseEntity.status(HttpStatus.OK).body(isLoginSucessful);
+        }
+        else{
+            log.info("[WARN] /api/login POST Request:Controller logic failed");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
     }
 
     //글,댓글 찾기

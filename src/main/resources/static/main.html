@@ -1,15 +1,34 @@
-<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>게시물 목록</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
-<body>
-<h1>게시물 목록</h1>
-<div id="posts-container"></div>
+<body class="bg-gray-100 flex flex-col items-center min-h-screen p-4">
+<div class="w-full max-w-2xl bg-white p-8 rounded-lg shadow-lg">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">게시물 목록</h1>
+        <a href="/create_post.html"
+           class="bg-indigo-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-indigo-700 transition duration-150 ease-in-out">
+            새 글 작성
+        </a>
+    </div>
+    <div id="posts-container" class="space-y-4">
+        <p class="text-center text-gray-500">게시물을 불러오는 중...</p>
+    </div>
+</div>
 <script>
     async function fetchPosts() {
+        const container = document.getElementById('posts-container');
+        container.innerHTML = '<p class="text-center text-gray-500">게시물을 불러오는 중...</p>';
+
         try {
             const response = await fetch('/api/posts');
             if (!response.ok) {
@@ -19,8 +38,7 @@
             displayPosts(posts);
         } catch (error) {
             console.error('게시물 목록을 가져오는 중 오류 발생:', error);
-            const container = document.getElementById('posts-container');
-            container.innerHTML = '<p>게시물 목록을 불러오는 데 실패했습니다.</p>';
+            container.innerHTML = '<p class="text-center text-red-500">게시물 목록을 불러오는 데 실패했습니다.</p>';
         }
     }
 
@@ -28,14 +46,19 @@
         const container = document.getElementById('posts-container');
         container.innerHTML = '';
         if (posts.length === 0) {
-            container.innerHTML = '<p>게시물이 없습니다.</p>';
+            container.innerHTML = '<p class="text-center text-gray-500">게시물이 없습니다.</p>';
             return;
         }
+
         posts.forEach(post => {
             const postDiv = document.createElement('div');
+            postDiv.className = "bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out";
+
             postDiv.innerHTML = `
-                <h3><a href="/main/${post.postId}">${post.title}</a></h3>
-                <p>${post.content}</p>
+                <h3 class="text-xl font-semibold text-gray-800">
+                    <a href="/posts/${post.postId}" class="hover:text-indigo-600 transition-colors duration-200">${post.postTitle}</a>
+                </h3>
+                <p class="mt-2 text-gray-600">${post.postContent}</p>
             `;
             container.appendChild(postDiv);
         });

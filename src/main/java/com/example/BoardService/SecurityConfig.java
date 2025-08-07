@@ -16,10 +16,17 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/", "/login", "/join", "/main","/*.html").permitAll()
+                        .requestMatchers(HttpMethod.GET,  "/login", "/join", "/main","/*.html","/api/posts").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/login","/api/join","/joinProc").permitAll()
                         .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(exceptionHandling ->
+                        exceptionHandling
+                                // 인증되지 않은 사용자가 보호된 리소스에 접근 시 /main으로 리디렉션
+                                .authenticationEntryPoint((request, response, authException) -> {
+                                    response.sendRedirect("/main");
+                                })
                 )
                 .csrf(auth->auth.disable())
                 .formLogin(auth -> auth
@@ -40,4 +47,5 @@ public class SecurityConfig {
     public BCryptPasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
     }
+
 }

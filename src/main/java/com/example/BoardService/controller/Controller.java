@@ -30,4 +30,7 @@ public class Controller {
         log.info("join page");
         return "forward:join.html";
     }
+
+
+
 }

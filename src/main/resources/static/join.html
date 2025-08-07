@@ -1,35 +1,64 @@
-<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원가입</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-<h1>회원가입</h1>
-<form id="joinForm">
-    <label for="username">아이디:</label>
-    <input type="text" id="username" name="username" required>
-    <label for="password">비밀번호:</label>
-    <input type="password" id="password" name="password" required>
-    <button type="submit">회원가입</button>
-</form>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<div class="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
+    <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">회원가입</h1>
+    <form id="joinForm" class="space-y-4">
+        <div>
+            <label for="username" class="sr-only">아이디</label>
+            <input type="text" id="username" name="username" placeholder="아이디" required
+                   class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+        </div>
+        <div>
+            <label for="password" class="sr-only">비밀번호</label>
+            <input type="password" id="password" name="password" placeholder="비밀번호" required
+                   class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+        </div>
+        <button type="submit"
+                class="w-full bg-indigo-600 text-white py-2 rounded-md font-semibold hover:bg-indigo-700 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+            회원가입
+        </button>
+    </form>
+    <div id="messageBox" class="mt-4 p-3 text-sm text-center rounded-md hidden"></div>
+</div>
 <script>
     document.getElementById('joinForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
-        // API 엔드포인트는 가정된 주소입니다.
-        const response = await fetch('/api/join', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        if (response.ok) {
-            alert('회원가입 성공!');
-            window.location.href = '/login';
-        } else {
-            alert('회원가입 실패.');
+        const messageBox = document.getElementById('messageBox');
+        messageBox.textContent = '';
+        messageBox.classList.add('hidden');
+
+        try {
+            const response = await fetch('/api/join', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (response.ok) {
+                messageBox.textContent = '회원가입 성공!';
+                messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-700');
+                messageBox.classList.add('bg-green-100', 'text-green-700');
+                window.location.href = '/login';
+            } else {
+                const error = await response.json().catch(() => null);
+                messageBox.textContent = '회원가입 실패. 다시 시도해 주세요.';
+                messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700');
+                messageBox.classList.add('bg-red-100', 'text-red-700');
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            messageBox.textContent = '회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700');
+            messageBox.classList.add('bg-red-100', 'text-red-700');
         }
     });
 </script>
