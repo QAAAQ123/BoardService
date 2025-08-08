@@ -8,13 +8,15 @@
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 <div class="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
     <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">로그인</h1>
-    <form id="loginForm" class="space-y-4">
+    <!-- action과 method 속성을 이용한 폼 제출 방식 -->
+    <form action="/api/login" method="post" class="space-y-4">
         <div>
-            <input id="username" type="text" name="username" placeholder="아이디" required
+            <!-- name 속성이 username, password인 것이 중요 -->
+            <input name="username" type="text" placeholder="아이디" required
                    class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
         </div>
         <div>
-            <input id="password" type="password" name="password" placeholder="비밀번호" required
+            <input name="password" type="password" placeholder="비밀번호" required
                    class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
         </div>
         <button type="submit"
@@ -22,47 +24,6 @@
             로그인
         </button>
     </form>
-    <div id="messageBox" class="mt-4 p-3 text-sm text-center rounded-md hidden"></div>
 </div>
-
-<script>
-    document.getElementById('loginForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const messageBox = document.getElementById('messageBox');
-        messageBox.textContent = '';
-        messageBox.classList.add('hidden');
-
-        try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password })
-            });
-
-            if (response.ok) {
-                messageBox.textContent = '로그인 성공!';
-                messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-700');
-                messageBox.classList.add('bg-green-100', 'text-green-700');
-                // 로그인 성공 후 다른 페이지로 리디렉션
-                window.location.href = '/main';
-            } else {
-                const error = await response.json().catch(() => null);
-                messageBox.textContent = '로그인 실패: 아이디 또는 비밀번호가 올바르지 않습니다.';
-                messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700');
-                messageBox.classList.add('bg-red-100', 'text-red-700');
-            }
-        } catch (error) {
-            console.error('Network error:', error);
-            messageBox.textContent = '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
-            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700');
-            messageBox.classList.add('bg-red-100', 'text-red-700');
-        }
-    });
-</script>
 </body>
 </html>

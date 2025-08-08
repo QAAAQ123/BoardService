@@ -110,21 +110,6 @@ public class RestController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    //user 로그인
-    @PostMapping("/login")
-    public ResponseEntity<Boolean> loginUser(@RequestBody UserDTO loginUserReqeustDTO){
-        log.info("/api/login POST Request:Login user");
-        Boolean isLoginSucessful = service.loginUser(loginUserReqeustDTO);
-        if(isLoginSucessful) {
-            log.info("/api/login POST Request:Controller logic sucess");
-            return ResponseEntity.status(HttpStatus.OK).body(isLoginSucessful);
-        }
-        else{
-            log.info("[WARN] /api/login POST Request:Controller logic failed");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-    }
-
     //글,댓글 찾기
     @GetMapping("/search/{keyword}")
     public ResponseEntity<List<PostDTO>> searchPostAndComment(@PathVariable String keyword){

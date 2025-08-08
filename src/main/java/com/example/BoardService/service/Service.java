@@ -210,19 +210,6 @@ public class Service {
                 bCryptPasswordEncoder.encode(saveRequestUserEntity.getPassword()));
         userRepository.save(saveRequestUserEntity);
     }
-
-    //25/08/04-password 검증 로직 추가
-    public Boolean loginUser(UserDTO loginUserRequestDTO) {
-        User loginUserRequestEntity = loginUserRequestDTO.toEntity();
-        log.info("[INFO] User login request: username={}, password={}",
-                loginUserRequestEntity.getUsername(),loginUserRequestEntity.getPassword());
-        User existingUserEntity = userRepository.findByUsername(loginUserRequestEntity.getUsername());
-
-        if(existingUserEntity == null)
-            return false;
-
-        return bCryptPasswordEncoder.matches(loginUserRequestEntity.getPassword(),existingUserEntity.getPassword());
-    }
     //유저
 
     //검색 기능-25/08/06 추가
