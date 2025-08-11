@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,12 +59,14 @@ public class Service {
     public PostAndMediaDTO createPost(PostDTO postDTO, List<MediaDTO> mediaDTOList) {
         Post postEntity = postDTO.toEntity();
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        postEntity.setUser(userRepository.findByUsername(auth.getName()));
+        String currentUsername = auth.getName();
+        User currentUser = userRepository.findByUsername(currentUsername);
+        postEntity.setUser(currentUser);
         postEntity.setPostTime(LocalDateTime.now());
 
         log.info("[INFO] New 'Post' request: postTitle={}, postContent={}, userId={}",postEntity.getPostTitle(),postEntity.getPostContent(),postEntity.getUser().getUserId());
         //postrepository에 postEntity저장
-        Post savedPostEntity = postRepository.save(postDTO.toEntity());
+        Post savedPostEntity = postRepository.save(postEntity);
 
         //mediaRepository에 mediaEntityList저장
         List<Media> savedMediaList = mediaRepository.saveAll(

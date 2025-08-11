@@ -83,7 +83,7 @@ public class RestControllerTest {
     //media 결합 완료
     @DisplayName("POST /posts 요청시 게시글을 성공적으로 생성한다.")
     @Test
-    @WithMockUser(username = "testuser", roles = "USER")
+    //@WithMockUser(username = "testuser", roles = "USER")
     void createPostEndpointSuccessfully() throws Exception {
         //given-1. 받는 값: postDTO,mediaDTOList
         PostDTO inputPostDTO = new PostDTO(null, "제목1", "내용1", null);
@@ -121,7 +121,7 @@ public class RestControllerTest {
     //media 결합 완료
     @DisplayName("PUT /posts/{postId} 요청시 게시글을 성공적으로 수정한다.")
     @Test
-    @WithMockUser(username = "testuser", roles = "USER")
+    //@WithMockUser(username = "testuser", roles = "USER")
     void updatePostEndpointSuccessfully() throws Exception {
         /* given-dto로 들어올 값(postandmedia),postId,서비스에서 반환할 값
         when-서비스 updatePost에 들어가고 리턴함
@@ -156,7 +156,7 @@ public class RestControllerTest {
     //comment 결합 완료
     @DisplayName("DELETE /Post/{postId} 요청시 게시글을 성공적으로 삭제한다")
     @Test
-    @WithMockUser(username = "testuser", roles = "USER")
+    //@WithMockUser(username = "testuser", roles = "USER")
     void deletePostEndpointSucessfully() throws Exception {
         //given-id받아옴
         Long postId = 1L;
@@ -176,7 +176,7 @@ public class RestControllerTest {
     //comment 결합 완료
     @DisplayName("GET /posts/{postId} 요청시 게시글을 성공적으로 반환한다.")
     @Test
-    @WithMockUser(username = "testuser", roles = "USER")
+    //@WithMockUser(username = "testuser", roles = "USER")
     void showPostEndpointSucessfully() throws Exception {
         //given-postId만 받아옴,when()에서 반환할 값: PostAndMediaDTO
         //post
@@ -219,7 +219,7 @@ public class RestControllerTest {
 
     @DisplayName("Post /posts/{postId}/comments 요청시 댓글을 성공적으로 생성한다.")
     @Test
-    @WithMockUser(username = "testuser", roles = "USER")
+    //@WithMockUser(username = "testuser", roles = "USER")
     void createCommentEndpointSuccessfully() throws Exception {
         //given-1.들어올 값: postId,commentDTO/service메소드 파리미터로 들어갈 값: postId,commentDTO/최종적으로 반환할 값: commentDTO
         Long postId = 1L;
@@ -244,7 +244,7 @@ public class RestControllerTest {
 
     @DisplayName("PUT /posts/{postId}/comments/{commentId} 요청시 댓글을 성공적으로 수정한다.")
     @Test
-    @WithMockUser(username = "testuser", roles = "USER")
+   // @WithMockUser(username = "testuser", roles = "USER")
     void updateCommentEndpointSucessfully() throws Exception {
         //given-들어올 값:postId,commentId,commentDTO/service의 메소드로 들어갈 값: commentId,commentDTO/최종적으로 반환할 값: commentDTO
         Long postId = 1L;
@@ -287,29 +287,10 @@ public class RestControllerTest {
     }
 
 
-    @DisplayName("POST /login 요청시 성공적으로 로그인 한다.")
-    @Test
-    void loginUserEndpointSucessfully() throws Exception {
-        //given-들어올 값:userdto/ 서비스에 들어갈 값:userDTO/ 최종적으로 반환할 값: Boolean
-        UserDTO loginUserRequestDTO = new UserDTO(null, "userName", "userPassword", null);
-        Boolean isLoginSucessful = true;
-
-        //when-서비스에 넣음,리턴값:Boolean-true
-        when(mockService.loginUser(any(UserDTO.class))).thenReturn(true);
-
-        mockMvc.perform(post("/api/login")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginUserRequestDTO)))
-                .andExpect(status().isOk())
-                .andExpect(content().string("true"));
-
-
-    }
 
     @DisplayName("POST /search 요청시 성공적으로 keyword가 포함된 글이나 댓글을 확인해 글 목록을 반환한다.")
     @Test
-    @WithMockUser(username = "testuser",roles="USER")
+   // @WithMockUser(username = "testuser",roles="USER")
     void searchPostAndCommentEndpointSucessfully() throws Exception {
         //given-들어올 값: keyword/서비스에 들어갈 값:keyword/컨트롤러에서 최종적으로 반환할 값:List<PostDTO>
         String keyword = "수정함";

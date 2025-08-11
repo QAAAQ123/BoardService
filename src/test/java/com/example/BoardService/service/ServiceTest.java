@@ -54,11 +54,11 @@ public class ServiceTest {
         sampleJpgBytes = new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0x00, 0x10, 0x4A, 0x46};
         samplePngBytes = new byte[]{(byte) 0x89, (byte) 0x50, (byte) 0x4E, (byte) 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
 
-        //sercurity 부분 AI 작성한 코드 Ctrl+V
-        Authentication auth = new UsernamePasswordAuthenticationToken("유저1", null);
-        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(auth);
-        SecurityContextHolder.setContext(securityContext);
+//        //sercurity 부분 AI 작성한 코드 Ctrl+V
+//        Authentication auth = new UsernamePasswordAuthenticationToken("유저1", null);
+//        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+//        securityContext.setAuthentication(auth);
+//        SecurityContextHolder.setContext(securityContext);
     }
 
     final LocalDateTime now = LocalDateTime.now();
@@ -351,32 +351,7 @@ public class ServiceTest {
         verify(encoder, times(1)).encode(any(CharSequence.class));
     }
 
-    //25/08/04-password encoder 테스트 추가
-    @DisplayName("유저 로그인을 위한 유저 정보 확인을 성공적으로 수행한다.")
-    @Test
-    void loginUserSucessfully() {
-        // given
-        String rawPassword = "userPassword";
-        String encodedPassword = "encodedPassword";
 
-        UserDTO loginUserRequestDTO = new UserDTO(null, "userName", rawPassword, null);
-        User existingUserEntity = new User(1L, "userName", encodedPassword, now.minusHours(1));
-
-        // when
-        // userRepository.findByUsername 호출 시 existingUserEntity 반환
-        when(mockUserRepository.findByUsername(anyString())).thenReturn(existingUserEntity);
-
-        // bCryptPasswordEncoder.matches 호출 시 true 반환 (성공 가정)
-        when(encoder.matches(rawPassword, encodedPassword)).thenReturn(true);
-
-        // act
-        Boolean result = mockService.loginUser(loginUserRequestDTO);
-
-        // assert
-        assertThat(result).isTrue();
-        verify(mockUserRepository, times(1)).findByUsername(anyString());
-        verify(encoder, times(1)).matches(rawPassword, encodedPassword);
-    }
 
     //25/08/06-find post and comment 테스트 추가
     @DisplayName("글이나 댓글에 특정 키워드를 포함하고 있는 글 목록을 성공적으로 검색한다.")

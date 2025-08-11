@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -6,9 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+        body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center min-h-screen p-4">
@@ -48,15 +47,13 @@
                 postTitle: postTitle,
                 postContent: postContent
             },
-            mediaDTOList: [] // 미디어 파일은 현재 DTO에 포함되지 않으므로 빈 배열로 전달
+            mediaDTOList: []
         };
 
         try {
             const response = await fetch('/api/posts', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(postData)
             });
 
@@ -64,10 +61,8 @@
                 messageBox.textContent = '게시물이 성공적으로 생성되었습니다.';
                 messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-700');
                 messageBox.classList.add('bg-green-100', 'text-green-700');
-                // 게시물 생성 후 게시물 목록 페이지로 리디렉션
-                window.location.href = '/main';
+                window.location.href = '/posts';
             } else {
-                const error = await response.json().catch(() => null);
                 messageBox.textContent = '게시물 생성 실패. 다시 시도해 주세요.';
                 messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700');
                 messageBox.classList.add('bg-red-100', 'text-red-700');

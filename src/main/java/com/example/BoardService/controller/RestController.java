@@ -37,7 +37,7 @@ public class RestController {
         log.info("/api/posts POST Request:Create Post");
         PostDTO inputPostDTO = inputPostAndMediaListDTO.getPostDTO();
         List<MediaDTO> inputMediaListDTO = inputPostAndMediaListDTO.getMediaDTOList();
-        log.info("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+
         PostAndMediaDTO createdPostAndMediaDTO = service.createPost(inputPostDTO,inputMediaListDTO);
 
         log.info("/api/posts POST Request:Controller logic sucess");

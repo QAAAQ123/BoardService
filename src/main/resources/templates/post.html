@@ -1,68 +1,39 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>게시물 상세</title>
+    <title th:text="${post.postDTO.postTitle}">게시물 상세</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
-<body>
-<div id="post-detail"></div>
-<hr>
-<div id="comments-container"></div>
-
-<script>
-    // 페이지 로드 시 게시물과 댓글을 가져옵니다.
-    document.addEventListener('DOMContentLoaded', () => {
-        const postId = window.location.pathname.split('/').pop();
-        fetchPostAndComments(postId);
-    });
-
-    async function fetchPostAndComments(postId) {
-        try {
-            // 게시물 상세 조회 API만 호출합니다. 댓글 정보가 게시물 DTO에 포함되어 있습니다.
-            const response = await fetch(`/api/posts/${postId}`);
-            if (!response.ok) {
-                throw new Error('네트워크 응답 오류');
-            }
-
-            const data = await response.json();
-            const post = data.postDTO;
-            const comments = data.commentDTOList;
-
-            displayPost(post);
-            displayComments(comments);
-
-        } catch (error) {
-            console.error('데이터를 가져오는 중 오류 발생:', error);
-            document.getElementById('post-detail').innerHTML = '<p>게시물을 불러올 수 없습니다.</p>';
-        }
-    }
-
-    function displayPost(post) {
-        const detailContainer = document.getElementById('post-detail');
-        detailContainer.innerHTML = `
-            <h1>${post.postTitle}</h1>
-            <p>${post.postContent}</p>
-        `;
-    }
-
-    function displayComments(comments) {
-        const commentsContainer = document.getElementById('comments-container');
-        commentsContainer.innerHTML = '<h2>댓글</h2>';
-
-        if (!comments || comments.length === 0) {
-            commentsContainer.innerHTML += '<p>작성된 댓글이 없습니다.</p>';
-            return;
-        }
-
-        const commentsList = document.createElement('ul');
-        comments.forEach(comment => {
-            const li = document.createElement('li');
-            li.innerHTML = `<b>댓글 ID: ${comment.commentId}</b>: ${comment.commentContent}`;
-            commentsList.appendChild(li);
-        });
-        commentsContainer.appendChild(commentsList);
-    }
-</script>
+<body class="bg-gray-100 flex flex-col items-center min-h-screen p-4">
+<div class="w-full max-w-2xl bg-white p-8 rounded-lg shadow-lg">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800" th:text="${post.postDTO.postTitle}"></h1>
+        <a href="/posts"
+           class="bg-gray-300 text-gray-800 py-2 px-4 rounded-md font-semibold hover:bg-gray-400 transition duration-150 ease-in-out">
+            목록으로
+        </a>
+    </div>
+    <div id="post-detail">
+        <p class="mt-4 text-gray-600" th:text="${post.postDTO.postContent}"></p>
+    </div>
+    <hr class="my-6 border-gray-200">
+    <div id="comments-container">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">댓글</h2>
+        <div th:if="${#lists.isEmpty(post.commentDTOList)}">
+            <p class="text-gray-500">작성된 댓글이 없습니다.</p>
+        </div>
+        <ul th:unless="${#lists.isEmpty(post.commentDTOList)}" class="space-y-2">
+            <li th:each="comment : ${post.commentDTOList}" class="bg-gray-50 p-3 rounded-md">
+                <span th:text="|댓글 ID: ${comment.commentId}|" class="font-bold"></span>: <span th:text="${comment.commentContent}"></span>
+            </li>
+        </ul>
+    </div>
+</div>
 </body>
 </html>

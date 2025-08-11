@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -49,7 +50,6 @@
                 messageBox.classList.add('bg-green-100', 'text-green-700');
                 window.location.href = '/login';
             } else {
-                const error = await response.json().catch(() => null);
                 messageBox.textContent = '회원가입 실패. 다시 시도해 주세요.';
                 messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700');
                 messageBox.classList.add('bg-red-100', 'text-red-700');

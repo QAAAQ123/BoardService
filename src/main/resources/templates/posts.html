@@ -1,4 +1,5 @@
-<html lang="ko">
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -6,65 +7,29 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+        body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center min-h-screen p-4">
 <div class="w-full max-w-2xl bg-white p-8 rounded-lg shadow-lg">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-800">게시물 목록</h1>
-        <a href="/posts/create"
+        <a th:href="@{/posts/create}"
            class="bg-indigo-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-indigo-700 transition duration-150 ease-in-out">
             새 글 작성
         </a>
     </div>
     <div id="posts-container" class="space-y-4">
-        <p class="text-center text-gray-500">게시물을 불러오는 중...</p>
+        <div th:if="${posts.isEmpty()}">
+            <p class="text-center text-gray-500">게시물이 없습니다.</p>
+        </div>
+        <div th:each="post : ${posts}" class="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out">
+            <h3 class="text-xl font-semibold text-gray-800">
+                <a th:href="@{/posts/{postId}(postId=${post.postId})}" th:text="${post.postTitle}" class="hover:text-indigo-600 transition-colors duration-200"></a>
+            </h3>
+            <p class="mt-2 text-gray-600" th:text="${post.postContent}"></p>
+        </div>
     </div>
 </div>
-<script>
-    async function fetchPosts() {
-        const container = document.getElementById('posts-container');
-        container.innerHTML = '<p class="text-center text-gray-500">게시물을 불러오는 중...</p>';
-
-        try {
-            const response = await fetch('/api/posts');
-            if (!response.ok) {
-                throw new Error('네트워크 응답이 올바르지 않습니다.');
-            }
-            const posts = await response.json();
-            displayPosts(posts);
-        } catch (error) {
-            console.error('게시물 목록을 가져오는 중 오류 발생:', error);
-            container.innerHTML = '<p class="text-center text-red-500">게시물 목록을 불러오는 데 실패했습니다.</p>';
-        }
-    }
-
-    function displayPosts(posts) {
-        const container = document.getElementById('posts-container');
-        container.innerHTML = '';
-        if (posts.length === 0) {
-            container.innerHTML = '<p class="text-center text-gray-500">게시물이 없습니다.</p>';
-            return;
-        }
-
-        posts.forEach(post => {
-            const postDiv = document.createElement('div');
-            postDiv.className = "bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out";
-
-            postDiv.innerHTML = `
-                <h3 class="text-xl font-semibold text-gray-800">
-                    <a href="/posts/${post.postId}" class="hover:text-indigo-600 transition-colors duration-200">${post.postTitle}</a>
-                </h3>
-                <p class="mt-2 text-gray-600">${post.postContent}</p>
-            `;
-            container.appendChild(postDiv);
-        });
-    }
-
-    fetchPosts();
-</script>
 </body>
 </html>

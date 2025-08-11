@@ -32,7 +32,7 @@ public class Post {
     private LocalDateTime postTime;
 
     @JoinColumn(name = "user_id")
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
     public PostDTO toDTO() {
